@@ -445,6 +445,9 @@ function App() {
   const [ambFilter, setAmbFilter] = useState(false);
   const [countryFilter, setCountryFilter] = useState("");
   const [regionFilter, setRegionFilter] = useState("");
+  const [promoFilter, setPromoFilter] = useState("");
+  const [providerFilter, setProviderFilter] = useState("");
+  const [betReadyFilter, setBetReadyFilter] = useState("");
   const [sortCol, setSortCol] = useState("name");
   const [sortDir, setSortDir] = useState(1);
   const [editRow, setEditRow] = useState(null);
@@ -453,6 +456,10 @@ function App() {
 
   const geoOptions     = useMemo(() => countryFilter==="CA" ? CA_PROVINCES    : ALL_US_STATES,   [countryFilter]);
   const geoNameMap     = useMemo(() => countryFilter==="CA" ? CA_PROVINCE_NAMES : US_STATE_NAMES, [countryFilter]);
+  
+  const promoOptions = useMemo(() => [...new Set(data.map(r => r.promoCode).filter(Boolean))].sort(), [data]);
+  const providerOptions = useMemo(() => [...new Set(data.flatMap(r => r.brandProviders))].sort(), [data]);
+  const betReadyOptions = useMemo(() => [...new Set(data.map(r => r.betReady).filter(Boolean))].sort(), [data]);
 
   const filtered = useMemo(() => data.filter(r => {
     if (catFilter !== "All" && r.category !== catFilter) return false;
@@ -462,6 +469,9 @@ function App() {
     if (countryFilter === "US" && r.provinces.length && !r.states.length) return false;
     if (countryFilter === "CA" && r.states.length && !r.provinces.length) return false;
     if (regionFilter && ![...r.states,...r.provinces].includes(regionFilter)) return false;
+    if (promoFilter && r.promoCode !== promoFilter) return false;
+    if (providerFilter && !r.brandProviders.includes(providerFilter)) return false;
+    if (betReadyFilter && r.betReady !== betReadyFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       return r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
@@ -471,7 +481,7 @@ function App() {
     let av = a[sortCol], bv = b[sortCol];
     if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
     return av < bv ? -sortDir : av > bv ? sortDir : 0;
-  }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, search, sortCol, sortDir]);
+  }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, promoFilter, providerFilter, betReadyFilter, search, sortCol, sortDir]);
 
   const sort = col => { if(sortCol===col) setSortDir(d=>-d); else { setSortCol(col); setSortDir(1); } };
   const save = updated => { setData(d=>d.map(r=>r.id===updated.id?updated:r)); setEditRow(null); };
@@ -527,6 +537,10 @@ function App() {
             ? <GeoFilterDropdown label={countryFilter==="CA"?"Province":"State"} options={geoOptions} nameMap={geoNameMap} value={regionFilter} onChange={setRegionFilter}/>
             : <button disabled style={{background:"#040a12",border:"1px solid #0d1828",borderRadius:6,color:"#1e3050",padding:"5px 12px",fontSize:12,minWidth:150,fontFamily:"inherit",cursor:"not-allowed"}}>State / Province ▾</button>
           }
+          <Sep/>
+          <SearchDropdown label="Promo Code" options={promoOptions} value={promoFilter} onChange={setPromoFilter}/>
+          <SearchDropdown label="Provider" options={providerOptions} value={providerFilter} onChange={setProviderFilter}/>
+          <SearchDropdown label="Bet Ready" options={betReadyOptions} value={betReadyFilter} onChange={setBetReadyFilter}/>
           <div style={{marginLeft:"auto"}}>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search brands…"
               style={{background:"#040a12",border:"1px solid #0d1828",borderRadius:6,padding:"5px 11px",color:"#c0d0ee",fontSize:12,outline:"none",width:170,fontFamily:"inherit"}}/>
