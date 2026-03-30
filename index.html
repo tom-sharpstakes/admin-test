@@ -68,8 +68,8 @@ const MOCK_DATA = [
   { id:11, name:"Caesars NJ (Amb.)",       category:"Casino",    socialCasino:false, description:"Hidden but has ambassador code",         sharpScore:4.0, minDeposit:10,  maxDeposit:5000,  cpa:140, bgColor:"#c9a84c", hidden:true,  brandProviders:["Caesars Entertainment"], provinces:[],                        states:["NJ"],                                      betReady:"5 minutes",  link:"https://example.com",                         promoCodes:[],          logo:"Caesars",    ambassadorCodes:["CZR-AMB-NJ"],   ambassadorMinDeposit:10, ambassadorPoints:200, testStatus:"Approved" },
 ];
 
-const isVisible     = r => !r.hidden || (r.hidden && !!r.ambassadorCode);
-const isTrulyHidden = r => r.hidden && !r.ambassadorCode;
+const isVisible     = r => !r.hidden || (r.hidden && r.ambassadorCodes.length > 0);
+const isTrulyHidden = r => r.hidden && r.ambassadorCodes.length === 0;
 
 // ── Geo cell with expand ──────────────────────────────────────────────────────
 function GeoCell({ provinces, states }) {
@@ -383,10 +383,29 @@ function EditModal({ row, onClose, onSave }) {
               </div>
             </F>
             <F label="Bet Ready"><input value={form.betReady} onChange={e=>set("betReady",e.target.value)} placeholder="e.g. 2 minutes" style={inp}/></F>
-            <F label="Promo Code"><input value={form.promoCode} onChange={e=>set("promoCode",e.target.value)} style={inp}/></F>
+            <F label="Promo Codes (comma-separated)">
+              <input value={(form.promoCodes||[]).join(", ")} onChange={e=>set("promoCodes",e.target.value.split(",").map(s=>s.trim()).filter(Boolean))} placeholder="e.g. CODE1, CODE2" style={inp}/>
+              {form.promoCodes && form.promoCodes.length > 0 && (
+                <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+                  {form.promoCodes.map(code=><Badge key={code} label={code} bg="#2a1e0e" color="#f5a623"/>)}
+                </div>
+              )}
+            </F>
             <F label="Link"><input value={form.link} onChange={e=>set("link",e.target.value)} style={inp}/></F>
             <F label="Logo"><input value={form.logo} onChange={e=>set("logo",e.target.value)} style={inp}/></F>
-            <F label="Ambassador Code"><input value={form.ambassadorCode} onChange={e=>set("ambassadorCode",e.target.value)} style={inp}/></F>
+            <F label="Test Status">
+              <select value={form.testStatus} onChange={e=>set("testStatus",e.target.value)} style={inp}>
+                {["Approved","Pending"].map(s=><option key={s}>{s}</option>)}
+              </select>
+            </F>
+            <F label="Ambassador Codes (comma-separated)" span>
+              <input value={(form.ambassadorCodes||[]).join(", ")} onChange={e=>set("ambassadorCodes",e.target.value.split(",").map(s=>s.trim()).filter(Boolean))} placeholder="e.g. AMB1, AMB2" style={inp}/>
+              {form.ambassadorCodes && form.ambassadorCodes.length > 0 && (
+                <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+                  {form.ambassadorCodes.map(code=><Badge key={code} label={code} bg="#1e1a2e" color="#a78bfa"/>)}
+                </div>
+              )}
+            </F>
             <F label="Ambassador Min Deposit ($)"><input type="number" value={form.ambassadorMinDeposit} onChange={e=>set("ambassadorMinDeposit",+e.target.value)} style={inp}/></F>
             <F label="Ambassador Points"><input type="number" value={form.ambassadorPoints} onChange={e=>set("ambassadorPoints",+e.target.value)} style={inp}/></F>
             <F label="Hidden"><Toggle value={form.hidden} onChange={v=>set("hidden",v)}/></F>
@@ -457,21 +476,21 @@ function App() {
   const geoOptions     = useMemo(() => countryFilter==="CA" ? CA_PROVINCES    : ALL_US_STATES,   [countryFilter]);
   const geoNameMap     = useMemo(() => countryFilter==="CA" ? CA_PROVINCE_NAMES : US_STATE_NAMES, [countryFilter]);
   
-  const promoOptions = useMemo(() => [...new Set(data.map(r => r.promoCode).filter(Boolean))].sort(), [data]);
+  const promoOptions = useMemo(() => [...new Set(data.flatMap(r => r.promoCodes))].sort(), [data]);
   const providerOptions = useMemo(() => [...new Set(data.flatMap(r => r.brandProviders))].sort(), [data]);
-  const ambassadorOptions = useMemo(() => [...new Set(data.map(r => r.ambassadorCode).filter(Boolean))].sort(), [data]);
+  const ambassadorOptions = useMemo(() => [...new Set(data.flatMap(r => r.ambassadorCodes))].sort(), [data]);
 
   const filtered = useMemo(() => data.filter(r => {
     if (catFilter !== "All" && r.category !== catFilter) return false;
     if (visFilter === "Visible" && !isVisible(r)) return false;
     if (visFilter === "Hidden" && !isTrulyHidden(r)) return false;
-    if (ambFilter && !r.ambassadorCode) return false;
+    if (ambFilter && r.ambassadorCodes.length === 0) return false;
     if (countryFilter === "US" && r.provinces.length && !r.states.length) return false;
     if (countryFilter === "CA" && r.states.length && !r.provinces.length) return false;
     if (regionFilter && ![...r.states,...r.provinces].includes(regionFilter)) return false;
-    if (promoFilter && r.promoCode !== promoFilter) return false;
+    if (promoFilter && !r.promoCodes.includes(promoFilter)) return false;
     if (providerFilter && !r.brandProviders.includes(providerFilter)) return false;
-    if (ambassadorFilter && r.ambassadorCode !== ambassadorFilter) return false;
+    if (ambassadorFilter && !r.ambassadorCodes.includes(ambassadorFilter)) return false;
     if (search) {
       const q = search.toLowerCase();
       return r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
@@ -559,9 +578,11 @@ function App() {
           <thead>
             <tr>
               <th style={{...TH,width:40}}/>
+              <Th                            label="Logo"/>
               <Th col="name"                 label="Name"/>
               <Th col="category"             label="Category"/>
               <Th                            label="Social Casino"/>
+              <Th                            label="Test Status"/>
               <Th col="sharpScore"           label="SharpScore"/>
               <Th col="minDeposit"           label="Min Dep."/>
               <Th col="maxDeposit"           label="Max Dep."/>
@@ -572,9 +593,8 @@ function App() {
               <Th                            label="Geo"/>
               <Th col="betReady"             label="Bet Ready"/>
               <Th                            label="Link"/>
-              <Th                            label="Promo"/>
-              <Th                            label="Logo"/>
-              <Th                            label="Amb. Code"/>
+              <Th                            label="Promo Codes"/>
+              <Th                            label="Amb. Codes"/>
               <Th col="ambassadorMinDeposit" label="Amb. Min $"/>
               <Th col="ambassadorPoints"     label="Amb. Pts"/>
             </tr>
@@ -588,13 +608,20 @@ function App() {
                 <td style={{...TD,padding:"8px 4px 8px 10px",verticalAlign:"middle"}}>
                   <ThreeDotMenu onEdit={()=>setEditRow(row)} onDelete={()=>setDeleteId(row.id)} onDuplicate={()=>dup(row)}/>
                 </td>
+                <td style={{...TD,verticalAlign:"middle"}}>
+                  <div style={{width:50,height:50,background:"#131c2e",border:"1px solid #222d42",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a80aa",fontSize:10,fontWeight:600,textAlign:"center",padding:4,wordBreak:"break-word"}}>
+                    {row.logo}
+                  </div>
+                </td>
                 <td style={{...TD,fontWeight:600,color:"#e8f0ff",maxWidth:160,verticalAlign:"middle"}}>
-                  <div style={{fontSize:9,color:"#4a6080",marginBottom:1}}>{row.logo}</div>
                   {row.name}
                 </td>
                 <td style={{...TD,verticalAlign:"middle"}}><Badge label={row.category} bg={row.category==="Casino"?"#0e1e3a":"#0e2a1e"} color={row.category==="Casino"?"#7eb8ff":"#6dbb9a"}/></td>
                 <td style={{...TD,textAlign:"center",verticalAlign:"middle"}}>
                   <span style={{color:row.socialCasino?"#a78bfa":"#2a3f5f",fontWeight:row.socialCasino?700:400}}>{row.socialCasino?"True":"False"}</span>
+                </td>
+                <td style={{...TD,verticalAlign:"middle"}}>
+                  <Badge label={row.testStatus} bg={row.testStatus==="Approved"?"#0e2a1e":"#2a1e0e"} color={row.testStatus==="Approved"?"#6dbb9a":"#f5a623"}/>
                 </td>
                 <td style={{...TD,verticalAlign:"middle"}}>
                   <span style={{color:"#f5a623",fontWeight:700}}>{row.sharpScore.toFixed(1)}</span>
@@ -619,11 +646,22 @@ function App() {
                 <td style={{...TD,verticalAlign:"middle"}}>
                   <CopyLinkCell link={row.link}/>
                 </td>
-                <td style={{...TD,color:"#f5a623",verticalAlign:"middle"}}>{row.promoCode||<span style={{color:"#2a3f5f"}}>—</span>}</td>
-                <td style={{...TD,color:"#6a80aa",verticalAlign:"middle"}}>{row.logo}</td>
-                <td style={{...TD,color:"#a78bfa",verticalAlign:"middle"}}>{row.ambassadorCode||<span style={{color:"#2a3f5f"}}>—</span>}</td>
-                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?`$${row.ambassadorMinDeposit}`:<span style={{color:"#2a3f5f"}}>—</span>}</td>
-                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?row.ambassadorPoints:<span style={{color:"#2a3f5f"}}>—</span>}</td>
+                <td style={{...TD,color:"#f5a623",verticalAlign:"middle"}}>
+                  {row.promoCodes.length > 0 ? (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+                      {row.promoCodes.map(code=><Badge key={code} label={code} bg="#2a1e0e" color="#f5a623"/>)}
+                    </div>
+                  ) : <span style={{color:"#2a3f5f"}}>—</span>}
+                </td>
+                <td style={{...TD,color:"#a78bfa",verticalAlign:"middle"}}>
+                  {row.ambassadorCodes.length > 0 ? (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+                      {row.ambassadorCodes.map(code=><Badge key={code} label={code} bg="#1e1a2e" color="#a78bfa"/>)}
+                    </div>
+                  ) : <span style={{color:"#2a3f5f"}}>—</span>}
+                </td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCodes.length>0?`$${row.ambassadorMinDeposit}`:<span style={{color:"#2a3f5f"}}>—</span>}</td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCodes.length>0?row.ambassadorPoints:<span style={{color:"#2a3f5f"}}>—</span>}</td>
               </tr>
             ))}
           </tbody>
