@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SharpStakes — Overview</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #040a12; font-family: 'DM Mono', 'Fira Code', monospace; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #060d18; }
+  ::-webkit-scrollbar-thumb { background: #1a2540; border-radius: 3px; }
+  select option { background: #0b1220; color: #e0e8ff; }
+  .copy-cell { cursor: pointer; }
+  .copy-cell:hover span.link-text { color: #7eb8ff !important; }
+  .copy-cell:hover span.copy-hint { opacity: 1 !important; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useRef, useEffect } = React;
+
+// ── Full name maps ────────────────────────────────────────────────────────────
+const US_STATE_NAMES = {
+  AK:"Alaska", AL:"Alabama", AR:"Arkansas", AZ:"Arizona", CA:"California",
+  CO:"Colorado", CT:"Connecticut", DE:"Delaware", FL:"Florida", GA:"Georgia",
+  HI:"Hawaii", IA:"Iowa", ID:"Idaho", IL:"Illinois", IN:"Indiana",
+  KS:"Kansas", KY:"Kentucky", LA:"Louisiana", MA:"Massachusetts", MD:"Maryland",
+  ME:"Maine", MI:"Michigan", MN:"Minnesota", MO:"Missouri", MS:"Mississippi",
+  MT:"Montana", NC:"North Carolina", ND:"North Dakota", NE:"Nebraska", NH:"New Hampshire",
+  NJ:"New Jersey", NM:"New Mexico", NV:"Nevada", NY:"New York", OH:"Ohio",
+  OK:"Oklahoma", OR:"Oregon", PA:"Pennsylvania", RI:"Rhode Island", SC:"South Carolina",
+  SD:"South Dakota", TN:"Tennessee", TX:"Texas", UT:"Utah", VA:"Virginia",
+  VT:"Vermont", WA:"Washington", WI:"Wisconsin", WV:"West Virginia", WY:"Wyoming",
+};
+const CA_PROVINCE_NAMES = {
+  AB:"Alberta", BC:"British Columbia", MB:"Manitoba", NB:"New Brunswick",
+  NL:"Newfoundland and Labrador", NS:"Nova Scotia", NT:"Northwest Territories",
+  NU:"Nunavut", ON:"Ontario", PE:"Prince Edward Island", QC:"Quebec",
+  SK:"Saskatchewan", YT:"Yukon",
+};
+
+const US_REGIONS = {
+  Northeast: ["CT","ME","MA","NH","NJ","NY","PA","RI","VT"],
+  Southeast: ["AL","AR","FL","GA","KY","LA","MD","MS","NC","SC","TN","VA","WV","DE"],
+  Midwest:   ["IL","IN","IA","KS","MI","MN","MO","NE","ND","OH","SD","WI"],
+  Southwest: ["AZ","NM","OK","TX"],
+  West:      ["AK","CA","CO","HI","ID","MT","NV","OR","UT","WA","WY"],
+};
+const ALL_US_STATES   = Object.keys(US_STATE_NAMES).sort();
+const CA_PROVINCES    = Object.keys(CA_PROVINCE_NAMES).sort();
+
+const MOCK_DATA = [
+  { id:1,  name:"BetMGM ON",              category:"Casino",     socialCasino:false, description:"MGM's Ontario online casino",            sharpScore:4.5, minDeposit:10,  maxDeposit:5000,  cpa:150, bgColor:"#1a1a2e", hidden:false, brandProviders:["MGM","Entain"],          provinces:["ON"],                    states:[],                                          betReady:"2 minutes",  link:"https://affiliates.royuty.app/route/11750",   promoCode:"SHARP100",  logo:"BetMGM",     ambassadorCode:"SHARP-AMB-01", ambassadorMinDeposit:20, ambassadorPoints:500 },
+  { id:2,  name:"OLG",                    category:"Casino",     socialCasino:false, description:"Ontario Lottery and Gaming Corporation", sharpScore:3.8, minDeposit:10,  maxDeposit:2000,  cpa:90,  bgColor:"#ff6b00", hidden:false, brandProviders:["OLG"],                  provinces:["ON"],                    states:[],                                          betReady:"5 minutes",  link:"https://affiliates.royuty.app/route/73515",   promoCode:"",          logo:"OLG",        ambassadorCode:"",             ambassadorMinDeposit:0,  ambassadorPoints:0 },
+  { id:3,  name:"FanDuel Casino Michigan", category:"Casino",    socialCasino:false, description:"FanDuel's Michigan casino offering",     sharpScore:4.7, minDeposit:10,  maxDeposit:10000, cpa:200, bgColor:"#1478d4", hidden:false, brandProviders:["FanDuel","Flutter"],     provinces:[],                        states:["MI"],                                      betReady:"3 minutes",  link:"https://wlfanduelus.adsrv.eacdn.com/C.ashx", promoCode:"FANDUEL50", logo:"FanDuel",    ambassadorCode:"FD-AMB-22",    ambassadorMinDeposit:10, ambassadorPoints:300 },
+  { id:4,  name:"DraftKings Casino",       category:"Casino",    socialCasino:false, description:"DraftKings online casino — multi-state", sharpScore:4.6, minDeposit:5,   maxDeposit:10000, cpa:180, bgColor:"#53d22c", hidden:false, brandProviders:["DraftKings"],            provinces:[],                        states:["CT","MI","NJ","PA","WV","OH","NY","CO","AZ","IN","LA","MD","MA","VA","WY","TN","IA","KS","KY","NE","SD","ND","MO","MT","OR","ID","WA","VT","NH","RI","NM","ME","AR","DE","NC","AL","GA","MS","SC","FL","TX","CA","IL","MN","WI","UT","NV","HI","AK","OK","WA"], betReady:"Instant",    link:"https://affiliates.draftkings.com/casino",    promoCode:"DK100",     logo:"DraftKings", ambassadorCode:"DK-AMB-07",    ambassadorMinDeposit:5,  ambassadorPoints:250 },
+  { id:5,  name:"Pulsz",                   category:"Casino",    socialCasino:true,  description:"Free-to-play social casino platform",    sharpScore:3.2, minDeposit:0,   maxDeposit:0,     cpa:40,  bgColor:"#8b2fc9", hidden:false, brandProviders:["Grid Games"],            provinces:["AB","BC","MB","NB","NL","NS","NT","NU","ON","PE","QC","SK","YT"], states:["CA","TX","FL","NY","IL","OH"], betReady:"N/A", link:"https://affiliates.royuty.app/route/267225", promoCode:"PULSZ30",   logo:"Pulsz",      ambassadorCode:"",             ambassadorMinDeposit:0,  ambassadorPoints:0 },
+  { id:6,  name:"Stake.US",                category:"Casino",    socialCasino:true,  description:"Stake's US social casino arm",           sharpScore:4.1, minDeposit:0,   maxDeposit:0,     cpa:60,  bgColor:"#00b67a", hidden:false, brandProviders:["Stake"],                 provinces:[],                        states:["CA","TX","FL","NY","OH","GA"],              betReady:"N/A",        link:"https://affiliates.royuty.app/route/267224",  promoCode:"STAKE25",   logo:"Stake",      ambassadorCode:"STK-AMB-03",   ambassadorMinDeposit:0,  ambassadorPoints:150 },
+  { id:7,  name:"BetRivers NJ",            category:"Sportsbook",socialCasino:false, description:"BetRivers NJ sportsbook & casino",       sharpScore:3.9, minDeposit:10,  maxDeposit:5000,  cpa:120, bgColor:"#c41e3a", hidden:false, brandProviders:["Rush Street"],           provinces:[],                        states:["NJ"],                                      betReady:"10 minutes", link:"https://go.affiliationncloud.com/0008TF",     promoCode:"RIVERS200", logo:"BetRivers",  ambassadorCode:"BR-AMB-11",    ambassadorMinDeposit:10, ambassadorPoints:200 },
+  { id:8,  name:"Caesars Palace Casino",   category:"Casino",    socialCasino:false, description:"Caesars' online casino — hidden",        sharpScore:4.3, minDeposit:10,  maxDeposit:5000,  cpa:160, bgColor:"#c9a84c", hidden:true,  brandProviders:["Caesars Entertainment"], provinces:[],                        states:["NJ","MI","PA","WV"],                        betReady:"5 minutes",  link:"https://wlwilliamhillus.adsrv.eacdn.com",     promoCode:"CAESARS10", logo:"Caesars",    ambassadorCode:"",             ambassadorMinDeposit:0,  ambassadorPoints:0 },
+  { id:9,  name:"PointsBet ON",            category:"Sportsbook",socialCasino:false, description:"PointsBet Ontario sportsbook",           sharpScore:3.5, minDeposit:10,  maxDeposit:3000,  cpa:100, bgColor:"#e63946", hidden:false, brandProviders:["PointsBet"],             provinces:["ON"],                    states:[],                                          betReady:"15 minutes", link:"https://affiliates.pointsbet.com/ON",         promoCode:"PB150",     logo:"PointsBet",  ambassadorCode:"PB-AMB-05",    ambassadorMinDeposit:10, ambassadorPoints:400 },
+  { id:10, name:"BetMGM Michigan",         category:"Casino",    socialCasino:false, description:"BetMGM Michigan online casino",          sharpScore:4.4, minDeposit:10,  maxDeposit:5000,  cpa:155, bgColor:"#1a1a2e", hidden:true,  brandProviders:["MGM","Entain"],          provinces:[],                        states:["MI"],                                      betReady:"2 minutes",  link:"https://affiliates.royuty.app/route/241516",  promoCode:"MGM150",    logo:"BetMGM",     ambassadorCode:"MGM-AMB-MI",   ambassadorMinDeposit:20, ambassadorPoints:500 },
+  { id:11, name:"Caesars NJ (Amb.)",       category:"Casino",    socialCasino:false, description:"Hidden but has ambassador code",         sharpScore:4.0, minDeposit:10,  maxDeposit:5000,  cpa:140, bgColor:"#c9a84c", hidden:true,  brandProviders:["Caesars Entertainment"], provinces:[],                        states:["NJ"],                                      betReady:"5 minutes",  link:"https://example.com",                         promoCode:"",          logo:"Caesars",    ambassadorCode:"CZR-AMB-NJ",   ambassadorMinDeposit:10, ambassadorPoints:200 },
+];
+
+const isVisible     = r => !r.hidden || (r.hidden && !!r.ambassadorCode);
+const isTrulyHidden = r => r.hidden && !r.ambassadorCode;
+
+// ── Geo cell with expand ──────────────────────────────────────────────────────
+function GeoCell({ provinces, states }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const caNames = [...provinces].sort().map(c => CA_PROVINCE_NAMES[c] || c);
+  const usNames = [...new Set(states)].sort().map(s => US_STATE_NAMES[s] || s);
+  const allNames = [
+    ...(caNames.length ? caNames.map(n => ({ label: n, country: "CA" })) : []),
+    ...(usNames.length ? usNames.map(n => ({ label: n, country: "US" })) : []),
+  ];
+
+  if (!allNames.length) return <span style={{color:"#1a2540"}}>—</span>;
+
+  const SHOW = 3;
+  const overflow = allNames.length > SHOW;
+
+  if (expanded) {
+    // Group by country
+    const caGroup = allNames.filter(x => x.country === "CA");
+    const usGroup = allNames.filter(x => x.country === "US");
+    return (
+      <div>
+        {caGroup.length > 0 && (
+          <div style={{marginBottom: usGroup.length ? 6 : 0}}>
+            <div style={{fontSize:9,color:"#364a6a",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}}>Canada</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"2px 6px"}}>
+              {caGroup.map(x => <span key={x.label} style={{fontSize:11,color:"#8899bb"}}>{x.label}</span>)}
+            </div>
+          </div>
+        )}
+        {usGroup.length > 0 && (
+          <div>
+            <div style={{fontSize:9,color:"#364a6a",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}}>United States</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"2px 6px"}}>
+              {usGroup.map(x => <span key={x.label} style={{fontSize:11,color:"#8899bb"}}>{x.label}</span>)}
+            </div>
+          </div>
+        )}
+        <button onClick={e=>{e.stopPropagation();setExpanded(false);}}
+          style={{marginTop:6,background:"none",border:"none",color:"#4f8ef7",fontSize:10,cursor:"pointer",padding:0,fontFamily:"inherit"}}>
+          ▲ collapse
+        </button>
+      </div>
+    );
+  }
+
+  const shown = allNames.slice(0, SHOW);
+  return (
+    <div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>
+      {shown.map(x => (
+        <span key={x.label} style={{background:"#131c2e",color:"#6a80aa",fontSize:10,padding:"2px 7px",borderRadius:4,whiteSpace:"nowrap"}}>{x.label}</span>
+      ))}
+      {overflow && (
+        <button onClick={e=>{e.stopPropagation();setExpanded(true);}}
+          style={{background:"#1e3a6e",color:"#7eb8ff",fontSize:10,padding:"2px 7px",borderRadius:4,border:"none",cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+          +{allNames.length - SHOW} more
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Copy link cell ────────────────────────────────────────────────────────────
+function CopyLinkCell({ link }) {
+  const [copied, setCopied] = useState(false);
+  const handle = () => {
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <div onClick={handle} className="copy-cell" style={{maxWidth:160,cursor:"pointer"}} title="Click to copy link">
+      <span className="link-text" style={{color: copied ? "#4caf82" : "#4f8ef7", fontSize:11, display:"block", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", transition:"color .15s"}}>
+        {copied ? "✓ Copied!" : link.replace(/https?:\/\//,"")}
+      </span>
+      <span className="copy-hint" style={{fontSize:9,color:"#364a6a",opacity:0,transition:"opacity .15s"}}>click to copy</span>
+    </div>
+  );
+}
+
+function Swatch({ color }) {
+  return (
+    <span style={{display:"inline-flex",alignItems:"center",gap:5}}>
+      <span style={{display:"inline-block",width:14,height:14,borderRadius:3,background:color,border:"1px solid #222d42",flexShrink:0}}/>
+      <span style={{fontSize:10,color:"#364a6a",fontFamily:"monospace"}}>{color}</span>
+    </span>
+  );
+}
+
+function Badge({ label, bg="#131c2e", color="#6a80aa" }) {
+  return <span style={{background:bg,color,fontSize:10,padding:"2px 7px",borderRadius:4,whiteSpace:"nowrap",display:"inline-block"}}>{label}</span>;
+}
+
+function Toggle({ value, onChange, label }) {
+  return (
+    <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none"}}>
+      <div onClick={() => onChange(!value)} style={{width:36,height:19,borderRadius:10,background:value?"#4f8ef7":"#131c2e",position:"relative",transition:"background .2s",flexShrink:0,border:"1px solid",borderColor:value?"#4f8ef7":"#222d42"}}>
+        <div style={{position:"absolute",top:2,left:value?18:2,width:13,height:13,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
+      </div>
+      {label && <span style={{fontSize:12,color:"#4a6080"}}>{label}</span>}
+    </label>
+  );
+}
+
+function ThreeDotMenu({ onEdit, onDelete, onDuplicate }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef();
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+  const items = [
+    { label:"Edit",      icon:"✎", action:onEdit,      color:"#c8d8f0" },
+    { label:"Duplicate", icon:"⧉", action:onDuplicate, color:"#7eb8ff" },
+    { label:"Delete",    icon:"✕", action:onDelete,    color:"#f56565" },
+  ];
+  return (
+    <div ref={ref} style={{position:"relative"}}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{background:"none",border:"1px solid #1a2540",borderRadius:5,color:"#364a6a",padding:"2px 7px",cursor:"pointer",fontSize:16,letterSpacing:1,lineHeight:1.1}}
+        onMouseEnter={e=>e.currentTarget.style.borderColor="#4f8ef7"}
+        onMouseLeave={e=>e.currentTarget.style.borderColor="#1a2540"}
+      >···</button>
+      {open && (
+        <div style={{position:"absolute",left:0,top:"110%",zIndex:400,background:"#080f1c",border:"1px solid #1a2540",borderRadius:8,minWidth:130,boxShadow:"0 10px 30px rgba(0,0,0,.8)",overflow:"hidden"}}>
+          {items.map((item,i) => (
+            <div key={item.label} onClick={() => { item.action(); setOpen(false); }}
+              style={{padding:"9px 14px",fontSize:12,color:item.color,cursor:"pointer",display:"flex",alignItems:"center",gap:9,borderBottom:i<items.length-1?"1px solid #0d1828":"none"}}
+              onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+            >
+              <span style={{fontSize:14,opacity:.8}}>{item.icon}</span>{item.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GeoSelector({ country, selected, onChange }) {
+  const [search, setSearch] = useState("");
+  const isUS = country === "US";
+  const items = isUS ? ALL_US_STATES : CA_PROVINCES;
+  const nameMap = isUS ? US_STATE_NAMES : CA_PROVINCE_NAMES;
+  const filtered = items.filter(s =>
+    s.toLowerCase().includes(search.toLowerCase()) ||
+    nameMap[s].toLowerCase().includes(search.toLowerCase())
+  );
+  const toggleAll = () => onChange(selected.length === items.length ? [] : [...items]);
+  const toggleRegion = region => {
+    const ri = US_REGIONS[region];
+    const allIn = ri.every(s => selected.includes(s));
+    onChange(allIn ? selected.filter(s => !ri.includes(s)) : [...new Set([...selected, ...ri])]);
+  };
+  const toggleItem = item => onChange(selected.includes(item) ? selected.filter(s => s !== item) : [...selected, item]);
+  const QBtn = ({ label, active, onClick }) => (
+    <button onClick={onClick} style={{padding:"3px 8px",borderRadius:4,fontSize:10,cursor:"pointer",border:"1px solid",
+      borderColor:active?"#4f8ef7":"#1a2540",background:active?"#1e3a6e":"#0b1220",color:active?"#7eb8ff":"#4a6080"}}>{label}</button>
+  );
+  return (
+    <div style={{border:"1px solid #1a2540",borderRadius:8,overflow:"hidden",background:"#060d18"}}>
+      <div style={{padding:"7px 10px",borderBottom:"1px solid #0d1828"}}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`Search ${isUS?"states":"provinces"}…`}
+          style={{width:"100%",background:"#0b1220",border:"1px solid #1a2540",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
+      </div>
+      <div style={{padding:"6px 10px",borderBottom:"1px solid #0d1828",display:"flex",flexWrap:"wrap",gap:4}}>
+        <QBtn label={selected.length===items.length?"Deselect All":"Select All"} active={selected.length===items.length} onClick={toggleAll}/>
+        {isUS && Object.keys(US_REGIONS).map(r => <QBtn key={r} label={r} active={US_REGIONS[r].every(s=>selected.includes(s))} onClick={()=>toggleRegion(r)}/>)}
+      </div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:3,padding:10,maxHeight:140,overflowY:"auto"}}>
+        {filtered.map(s => (
+          <button key={s} onClick={() => toggleItem(s)} style={{padding:"3px 8px",borderRadius:4,fontSize:11,border:"1px solid",cursor:"pointer",
+            borderColor:selected.includes(s)?"#4f8ef7":"#1a2540",background:selected.includes(s)?"#1e3a6e":"#0b1220",color:selected.includes(s)?"#7eb8ff":"#4a6080"}}>
+            {nameMap[s]}
+          </button>
+        ))}
+      </div>
+      <div style={{padding:"3px 10px 7px",fontSize:10,color:"#1a2540"}}>{selected.length}/{items.length} selected</div>
+    </div>
+  );
+}
+
+function SearchDropdown({ label, options, value, onChange, style }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef();
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+  const filtered = ["All",...options].filter(o => o.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div ref={ref} style={{position:"relative",...style}}>
+      <button onClick={() => setOpen(o=>!o)} style={{background:"#060d18",border:"1px solid #1a2540",borderRadius:6,color:value?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:120,fontFamily:"inherit"}}>
+        {value||label}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
+      </button>
+      {open && (
+        <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#060d18",border:"1px solid #1a2540",borderRadius:8,minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
+          <div style={{padding:6}}>
+            <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"
+              style={{width:"100%",background:"#0b1220",border:"1px solid #1a2540",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
+          </div>
+          <div style={{maxHeight:200,overflowY:"auto"}}>
+            {filtered.map(o => (
+              <div key={o} onClick={() => { onChange(o==="All"?"":o); setOpen(false); setSearch(""); }}
+                style={{padding:"7px 12px",fontSize:12,color:(!value&&o==="All")||value===o?"#7eb8ff":"#8899bb",cursor:"pointer",background:value===o?"#1e3a6e":"transparent"}}
+                onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+                onMouseLeave={e=>e.currentTarget.style.background=value===o?"#1e3a6e":"transparent"}
+              >{o}</div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// State/province filter dropdown — full names with abbreviation search
+function GeoFilterDropdown({ label, options, nameMap, value, onChange, style }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef();
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+  const filtered = options.filter(o =>
+    o.toLowerCase().includes(search.toLowerCase()) ||
+    (nameMap[o]||"").toLowerCase().includes(search.toLowerCase())
+  );
+  const displayVal = value ? (nameMap[value] || value) : null;
+  return (
+    <div ref={ref} style={{position:"relative",...style}}>
+      <button onClick={() => setOpen(o=>!o)} style={{background:"#060d18",border:"1px solid #1a2540",borderRadius:6,color:displayVal?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:150,fontFamily:"inherit"}}>
+        {displayVal||label}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
+      </button>
+      {open && (
+        <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#060d18",border:"1px solid #1a2540",borderRadius:8,minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
+          <div style={{padding:6}}>
+            <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"
+              style={{width:"100%",background:"#0b1220",border:"1px solid #1a2540",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
+          </div>
+          <div style={{maxHeight:220,overflowY:"auto"}}>
+            <div onClick={() => { onChange(""); setOpen(false); setSearch(""); }}
+              style={{padding:"7px 12px",fontSize:12,color:!value?"#7eb8ff":"#8899bb",cursor:"pointer",background:!value?"#1e3a6e":"transparent"}}
+              onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+              onMouseLeave={e=>e.currentTarget.style.background=!value?"#1e3a6e":"transparent"}
+            >All</div>
+            {filtered.map(o => (
+              <div key={o} onClick={() => { onChange(o); setOpen(false); setSearch(""); }}
+                style={{padding:"7px 12px",fontSize:12,color:value===o?"#7eb8ff":"#8899bb",cursor:"pointer",background:value===o?"#1e3a6e":"transparent"}}
+                onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+                onMouseLeave={e=>e.currentTarget.style.background=value===o?"#1e3a6e":"transparent"}
+              >{nameMap[o] || o}</div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EditModal({ row, onClose, onSave }) {
+  const [form, setForm] = useState({ ...row });
+  const [geoCountry, setGeoCountry] = useState(row.provinces.length ? "CA" : "US");
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const inp = {width:"100%",background:"#060d18",border:"1px solid #1a2540",borderRadius:6,padding:"7px 10px",color:"#e0e8ff",fontSize:12,outline:"none",fontFamily:"inherit"};
+  const F = ({ label, span, children }) => (
+    <div style={{marginBottom:14,gridColumn:span?"1/-1":undefined}}>
+      <div style={{fontSize:10,color:"#364a6a",marginBottom:4,textTransform:"uppercase",letterSpacing:.9}}>{label}</div>
+      {children}
+    </div>
+  );
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"#080f1c",border:"1px solid #1a2540",borderRadius:12,width:"min(860px,100%)",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.9)"}}>
+        <div style={{padding:"15px 22px",borderBottom:"1px solid #0d1828",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontSize:10,color:"#4f8ef7",textTransform:"uppercase",letterSpacing:1.2,marginBottom:2}}>Editing brand</div>
+            <div style={{fontSize:17,fontWeight:700,color:"#e0e8ff"}}>{row.name}</div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"1px solid #1a2540",color:"#364a6a",fontSize:16,cursor:"pointer",borderRadius:6,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        </div>
+        <div style={{overflowY:"auto",padding:"18px 22px",flex:1}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0 18px"}}>
+            <F label="Name"><input value={form.name} onChange={e=>set("name",e.target.value)} style={inp}/></F>
+            <F label="Category">
+              <select value={form.category} onChange={e=>set("category",e.target.value)} style={inp}>
+                {["Casino","Sportsbook"].map(c=><option key={c}>{c}</option>)}
+              </select>
+            </F>
+            <F label="SharpScore (0–5)">
+              <input type="number" step="0.1" min="0" max="5" value={form.sharpScore} onChange={e=>set("sharpScore",parseFloat(e.target.value)||0)} style={inp}/>
+            </F>
+            <F label="Description" span>
+              <textarea value={form.description} onChange={e=>set("description",e.target.value)} rows={2} style={{...inp,resize:"vertical"}}/>
+            </F>
+            <F label="Min Deposit ($)"><input type="number" value={form.minDeposit} onChange={e=>set("minDeposit",+e.target.value)} style={inp}/></F>
+            <F label="Max Deposit ($)"><input type="number" value={form.maxDeposit} onChange={e=>set("maxDeposit",+e.target.value)} style={inp}/></F>
+            <F label="CPA ($)"><input type="number" value={form.cpa} onChange={e=>set("cpa",+e.target.value)} style={inp}/></F>
+            <F label="Background Color">
+              <div style={{display:"flex",gap:8}}>
+                <input type="color" value={form.bgColor} onChange={e=>set("bgColor",e.target.value)} style={{width:38,height:34,border:"1px solid #1a2540",borderRadius:6,background:"none",cursor:"pointer",padding:2,flexShrink:0}}/>
+                <input value={form.bgColor} onChange={e=>set("bgColor",e.target.value)} style={inp}/>
+              </div>
+            </F>
+            <F label="Bet Ready"><input value={form.betReady} onChange={e=>set("betReady",e.target.value)} placeholder="e.g. 2 minutes" style={inp}/></F>
+            <F label="Promo Code"><input value={form.promoCode} onChange={e=>set("promoCode",e.target.value)} style={inp}/></F>
+            <F label="Link"><input value={form.link} onChange={e=>set("link",e.target.value)} style={inp}/></F>
+            <F label="Logo"><input value={form.logo} onChange={e=>set("logo",e.target.value)} style={inp}/></F>
+            <F label="Ambassador Code"><input value={form.ambassadorCode} onChange={e=>set("ambassadorCode",e.target.value)} style={inp}/></F>
+            <F label="Ambassador Min Deposit ($)"><input type="number" value={form.ambassadorMinDeposit} onChange={e=>set("ambassadorMinDeposit",+e.target.value)} style={inp}/></F>
+            <F label="Ambassador Points"><input type="number" value={form.ambassadorPoints} onChange={e=>set("ambassadorPoints",+e.target.value)} style={inp}/></F>
+            <F label="Hidden"><Toggle value={form.hidden} onChange={v=>set("hidden",v)}/></F>
+            <F label="Social Casino"><Toggle value={form.socialCasino} onChange={v=>set("socialCasino",v)}/></F>
+            <F label="Brand Providers (comma-separated)" span>
+              <input value={(form.brandProviders||[]).join(", ")} onChange={e=>set("brandProviders",e.target.value.split(",").map(s=>s.trim()).filter(Boolean))} placeholder="e.g. MGM, Entain" style={inp}/>
+            </F>
+            <div style={{gridColumn:"1/-1",marginBottom:14}}>
+              <div style={{fontSize:10,color:"#364a6a",marginBottom:6,textTransform:"uppercase",letterSpacing:.9}}>Geography</div>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                {["US","CA"].map(c=>(
+                  <button key={c} onClick={()=>{ setGeoCountry(c); c==="US"?set("provinces",[]):set("states",[]); }}
+                    style={{padding:"5px 16px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:12,fontFamily:"inherit",
+                      borderColor:geoCountry===c?"#4f8ef7":"#1a2540",background:geoCountry===c?"#1e3a6e":"#060d18",color:geoCountry===c?"#7eb8ff":"#4a6080"}}>
+                    {c==="US"?"United States":"Canada"}
+                  </button>
+                ))}
+              </div>
+              <GeoSelector country={geoCountry} selected={geoCountry==="US"?form.states:form.provinces} onChange={v=>geoCountry==="US"?set("states",v):set("provinces",v)}/>
+            </div>
+          </div>
+        </div>
+        <div style={{padding:"13px 22px",borderTop:"1px solid #0d1828",display:"flex",justifyContent:"flex-end",gap:10}}>
+          <button onClick={onClose} style={{padding:"7px 18px",borderRadius:7,border:"1px solid #1a2540",background:"none",color:"#4a6080",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+          <button onClick={()=>onSave(form)} style={{padding:"7px 22px",borderRadius:7,border:"none",background:"#4f8ef7",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDialog({ name, onConfirm, onCancel }) {
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"#080f1c",border:"1px solid #1a2540",borderRadius:10,padding:28,maxWidth:340,textAlign:"center"}}>
+        <div style={{fontSize:22,marginBottom:10}}>🗑</div>
+        <div style={{fontSize:13,color:"#c8d8f0",marginBottom:6}}>Delete <strong>{name}</strong>?</div>
+        <div style={{fontSize:11,color:"#364a6a",marginBottom:22}}>This cannot be undone.</div>
+        <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+          <button onClick={onCancel} style={{padding:"7px 18px",borderRadius:7,border:"1px solid #1a2540",background:"none",color:"#4a6080",fontSize:12,cursor:"pointer"}}>Cancel</button>
+          <button onClick={onConfirm} style={{padding:"7px 18px",borderRadius:7,border:"none",background:"#f56565",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const TH = {padding:"8px 12px",textAlign:"left",color:"#1e3050",fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #0d1828",userSelect:"none",whiteSpace:"nowrap"};
+const TD = {padding:"9px 12px",borderTop:"1px solid #060d18",verticalAlign:"top"};
+const Sep = () => <div style={{width:1,height:22,background:"#0d1828",flexShrink:0}}/>;
+
+function App() {
+  const [data, setData] = useState(MOCK_DATA);
+  const [catFilter, setCatFilter] = useState("All");
+  const [visFilter, setVisFilter] = useState("All");
+  const [ambFilter, setAmbFilter] = useState(false);
+  const [countryFilter, setCountryFilter] = useState("");
+  const [regionFilter, setRegionFilter] = useState("");
+  const [sortCol, setSortCol] = useState("name");
+  const [sortDir, setSortDir] = useState(1);
+  const [editRow, setEditRow] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const geoOptions     = useMemo(() => countryFilter==="CA" ? CA_PROVINCES    : ALL_US_STATES,   [countryFilter]);
+  const geoNameMap     = useMemo(() => countryFilter==="CA" ? CA_PROVINCE_NAMES : US_STATE_NAMES, [countryFilter]);
+
+  const filtered = useMemo(() => data.filter(r => {
+    if (catFilter !== "All" && r.category !== catFilter) return false;
+    if (visFilter === "Visible" && !isVisible(r)) return false;
+    if (visFilter === "Hidden" && !isTrulyHidden(r)) return false;
+    if (ambFilter && !r.ambassadorCode) return false;
+    if (countryFilter === "US" && r.provinces.length && !r.states.length) return false;
+    if (countryFilter === "CA" && r.states.length && !r.provinces.length) return false;
+    if (regionFilter && ![...r.states,...r.provinces].includes(regionFilter)) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
+    }
+    return true;
+  }).sort((a,b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, search, sortCol, sortDir]);
+
+  const sort = col => { if(sortCol===col) setSortDir(d=>-d); else { setSortCol(col); setSortDir(1); } };
+  const save = updated => { setData(d=>d.map(r=>r.id===updated.id?updated:r)); setEditRow(null); };
+  const del  = id => { setData(d=>d.filter(r=>r.id!==id)); setDeleteId(null); };
+  const dup  = row => setData(d => [{ ...row, id:Date.now(), name:row.name+" (copy)", hidden:true }, ...d]);
+
+  const Th = ({ col, label }) => (
+    <th onClick={col?()=>sort(col):undefined} style={{...TH,cursor:col?"pointer":"default"}}>
+      {label}{col && sortCol===col && <span style={{marginLeft:3,opacity:.5}}>{sortDir>0?"↑":"↓"}</span>}
+    </th>
+  );
+
+  return (
+    <div style={{fontFamily:"'DM Mono','Fira Code',monospace",background:"#040a12",minHeight:"100vh",color:"#c8d8f0"}}>
+      {/* Nav */}
+      <div style={{background:"#060d18",borderBottom:"1px solid #0d1828",padding:"9px 18px",display:"flex",alignItems:"center",gap:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:7,flexShrink:0}}>
+          <div style={{background:"#4f8ef7",color:"#fff",fontWeight:800,fontSize:12,padding:"5px 8px",borderRadius:5}}>Ss</div>
+          <span style={{fontWeight:700,fontSize:13,color:"#e0e8ff"}}>SharpStakes</span>
+        </div>
+        <div style={{display:"flex",gap:1,overflowX:"auto"}}>
+          {["All Info","Count","Betting Stats","Users","Links","Sportsbooks","Chatbot","Magic Buttons","Promocode","Ambassador Codes","Admin Logs","Overview"].map(tab=>(
+            <button key={tab} style={{background:tab==="Overview"?"#1a2d50":"none",border:"none",color:tab==="Overview"?"#7eb8ff":"#2a3a55",padding:"5px 10px",fontSize:10,cursor:"pointer",borderRadius:4,fontFamily:"inherit",fontWeight:tab==="Overview"?700:400,borderBottom:tab==="Overview"?"2px solid #4f8ef7":"2px solid transparent",whiteSpace:"nowrap"}}>{tab}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{padding:"18px 22px 0"}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:1}}>
+          <div style={{fontSize:18,fontWeight:700,color:"#ddeeff"}}>Overview</div>
+          <div style={{fontSize:11,color:"#1e3050"}}>{filtered.length} of {data.length} brands</div>
+        </div>
+        <div style={{fontSize:11,color:"#1a2540",marginBottom:14}}>Filter, sort and edit all brands in one place</div>
+
+        <div style={{background:"#060d18",border:"1px solid #0d1828",borderRadius:10,padding:"11px 16px",marginBottom:12,display:"flex",flexWrap:"wrap",gap:10,alignItems:"center"}}>
+          <div style={{display:"flex",gap:2,background:"#040a12",borderRadius:6,padding:3}}>
+            {["All","Casino","Sportsbook"].map(c=>(
+              <button key={c} onClick={()=>setCatFilter(c)} style={{padding:"4px 12px",borderRadius:4,border:"none",cursor:"pointer",fontSize:11,fontFamily:"inherit",background:catFilter===c?"#4f8ef7":"transparent",color:catFilter===c?"#fff":"#2a3a55"}}>{c}</button>
+            ))}
+          </div>
+          <Sep/>
+          <div style={{display:"flex",gap:2,background:"#040a12",borderRadius:6,padding:3}}>
+            {[{k:"All",tip:"Show everything"},{k:"Visible",tip:"Not hidden, or hidden + ambassador code"},{k:"Hidden",tip:"Hidden with no ambassador code"}].map(v=>(
+              <button key={v.k} onClick={()=>setVisFilter(v.k)} title={v.tip}
+                style={{padding:"4px 11px",borderRadius:4,border:"none",cursor:"pointer",fontSize:11,fontFamily:"inherit",background:visFilter===v.k?"#4f8ef7":"transparent",color:visFilter===v.k?"#fff":"#2a3a55"}}>{v.k}</button>
+            ))}
+          </div>
+          <Sep/>
+          <Toggle value={ambFilter} onChange={setAmbFilter} label="Has Ambassador Code"/>
+          <Sep/>
+          <SearchDropdown label="Country" options={["US","CA"]} value={countryFilter} onChange={v=>{setCountryFilter(v);setRegionFilter("");}}/>
+          {countryFilter
+            ? <GeoFilterDropdown label={countryFilter==="CA"?"Province":"State"} options={geoOptions} nameMap={geoNameMap} value={regionFilter} onChange={setRegionFilter}/>
+            : <button disabled style={{background:"#040a12",border:"1px solid #0d1828",borderRadius:6,color:"#1e3050",padding:"5px 12px",fontSize:12,minWidth:150,fontFamily:"inherit",cursor:"not-allowed"}}>State / Province ▾</button>
+          }
+          <div style={{marginLeft:"auto"}}>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search brands…"
+              style={{background:"#040a12",border:"1px solid #0d1828",borderRadius:6,padding:"5px 11px",color:"#c0d0ee",fontSize:12,outline:"none",width:170,fontFamily:"inherit"}}/>
+          </div>
+        </div>
+
+        <div style={{fontSize:10,color:"#1a2540",marginBottom:12,display:"flex",gap:18,flexWrap:"wrap"}}>
+          <span><span style={{color:"#4caf82"}}>●</span> Visible = not hidden · or hidden with an ambassador code</span>
+          <span><span style={{color:"#f56565"}}>●</span> Hidden = hidden &amp; no ambassador code</span>
+          <span><span style={{color:"#f5a623"}}>*</span> Hidden* = hidden but has ambassador code (counts as Visible)</span>
+        </div>
+      </div>
+
+      <div style={{padding:"0 22px 48px",overflowX:"auto"}}>
+        <table style={{width:"100%",borderCollapse:"separate",borderSpacing:"0 2px",fontSize:12,minWidth:1500}}>
+          <thead>
+            <tr>
+              <th style={{...TH,width:40}}/>
+              <Th col="name"                 label="Name"/>
+              <Th col="category"             label="Category"/>
+              <Th                            label="Social Casino"/>
+              <Th col="sharpScore"           label="SharpScore"/>
+              <Th col="minDeposit"           label="Min Dep."/>
+              <Th col="maxDeposit"           label="Max Dep."/>
+              <Th col="cpa"                  label="CPA"/>
+              <Th                            label="BG Color"/>
+              <Th col="hidden"               label="Hidden"/>
+              <Th                            label="Providers"/>
+              <Th                            label="Geo"/>
+              <Th col="betReady"             label="Bet Ready"/>
+              <Th                            label="Link"/>
+              <Th                            label="Promo"/>
+              <Th                            label="Logo"/>
+              <Th                            label="Amb. Code"/>
+              <Th col="ambassadorMinDeposit" label="Amb. Min $"/>
+              <Th col="ambassadorPoints"     label="Amb. Pts"/>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(row => (
+              <tr key={row.id} style={{background:"#060d18",transition:"background .1s"}}
+                onMouseEnter={e=>e.currentTarget.style.background="#080f1c"}
+                onMouseLeave={e=>e.currentTarget.style.background="#060d18"}
+              >
+                <td style={{...TD,padding:"8px 4px 8px 10px",verticalAlign:"middle"}}>
+                  <ThreeDotMenu onEdit={()=>setEditRow(row)} onDelete={()=>setDeleteId(row.id)} onDuplicate={()=>dup(row)}/>
+                </td>
+                <td style={{...TD,fontWeight:600,color:"#ddeeff",maxWidth:160,verticalAlign:"middle"}}>
+                  <div style={{fontSize:9,color:"#1e3050",marginBottom:1}}>{row.logo}</div>
+                  {row.name}
+                </td>
+                <td style={{...TD,verticalAlign:"middle"}}><Badge label={row.category} bg={row.category==="Casino"?"#0e1e3a":"#0e2a1e"} color={row.category==="Casino"?"#7eb8ff":"#6dbb9a"}/></td>
+                <td style={{...TD,textAlign:"center",verticalAlign:"middle"}}>
+                  <span style={{color:row.socialCasino?"#a78bfa":"#1a2540",fontWeight:row.socialCasino?700:400}}>{row.socialCasino?"True":"False"}</span>
+                </td>
+                <td style={{...TD,verticalAlign:"middle"}}>
+                  <span style={{color:"#f5a623",fontWeight:700}}>{row.sharpScore.toFixed(1)}</span>
+                  <span style={{color:"#1e3050"}}>/5</span>
+                </td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>${row.minDeposit}</td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.maxDeposit?`$${row.maxDeposit.toLocaleString()}`:<span style={{color:"#1a2540"}}>—</span>}</td>
+                <td style={{...TD,color:"#a8e6a3",verticalAlign:"middle"}}>${row.cpa}</td>
+                <td style={{...TD,verticalAlign:"middle"}}><Swatch color={row.bgColor}/></td>
+                <td style={{...TD,textAlign:"center",verticalAlign:"middle"}}>
+                  {isTrulyHidden(row) && <span style={{color:"#f56565",fontSize:11,fontWeight:700}}>Yes</span>}
+                  {row.hidden && !isTrulyHidden(row) && <span style={{color:"#f5a623",fontSize:11}}>Yes*</span>}
+                  {!row.hidden && <span style={{color:"#1e3050",fontSize:11}}>No</span>}
+                </td>
+                <td style={{...TD,verticalAlign:"middle"}}>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:3}}>{row.brandProviders.map(p=><Badge key={p} label={p}/>)}</div>
+                </td>
+                <td style={{...TD,minWidth:200}}>
+                  <GeoCell provinces={row.provinces} states={row.states}/>
+                </td>
+                <td style={{...TD,color:"#c8d8f0",whiteSpace:"nowrap",verticalAlign:"middle"}}>{row.betReady}</td>
+                <td style={{...TD,verticalAlign:"middle"}}>
+                  <CopyLinkCell link={row.link}/>
+                </td>
+                <td style={{...TD,color:"#f5a623",verticalAlign:"middle"}}>{row.promoCode||<span style={{color:"#1a2540"}}>—</span>}</td>
+                <td style={{...TD,color:"#6a80aa",verticalAlign:"middle"}}>{row.logo}</td>
+                <td style={{...TD,color:"#a78bfa",verticalAlign:"middle"}}>{row.ambassadorCode||<span style={{color:"#1a2540"}}>—</span>}</td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?`$${row.ambassadorMinDeposit}`:<span style={{color:"#1a2540"}}>—</span>}</td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?row.ambassadorPoints:<span style={{color:"#1a2540"}}>—</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length===0 && (
+          <div style={{textAlign:"center",padding:48,color:"#1a2540",fontSize:13}}>No brands match current filters.</div>
+        )}
+      </div>
+
+      {editRow && <EditModal row={editRow} onClose={()=>setEditRow(null)} onSave={save}/>}
+      {deleteId && <ConfirmDialog name={data.find(r=>r.id===deleteId)?.name} onConfirm={()=>del(deleteId)} onCancel={()=>setDeleteId(null)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
