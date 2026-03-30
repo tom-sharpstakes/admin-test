@@ -9,11 +9,11 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #040a12; font-family: 'DM Mono', 'Fira Code', monospace; }
+  body { background: #0a1628; font-family: 'DM Mono', 'Fira Code', monospace; }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #060d18; }
-  ::-webkit-scrollbar-thumb { background: #1a2540; border-radius: 3px; }
-  select option { background: #0b1220; color: #e0e8ff; }
+  ::-webkit-scrollbar-track { background: #0f1a2e; }
+  ::-webkit-scrollbar-thumb { background: #2a3f5f; border-radius: 3px; }
+  select option { background: #1a2840; color: #e0e8ff; }
   .copy-cell { cursor: pointer; }
   .copy-cell:hover span.link-text { color: #7eb8ff !important; }
   .copy-cell:hover span.copy-hint { opacity: 1 !important; }
@@ -82,7 +82,7 @@ function GeoCell({ provinces, states }) {
     ...(usNames.length ? usNames.map(n => ({ label: n, country: "US" })) : []),
   ];
 
-  if (!allNames.length) return <span style={{color:"#1a2540"}}>—</span>;
+  if (!allNames.length) return <span style={{color:"#2a3f5f"}}>—</span>;
 
   const SHOW = 3;
   const overflow = allNames.length > SHOW;
@@ -192,16 +192,16 @@ function ThreeDotMenu({ onEdit, onDelete, onDuplicate }) {
   return (
     <div ref={ref} style={{position:"relative"}}>
       <button onClick={() => setOpen(o => !o)}
-        style={{background:"none",border:"1px solid #1a2540",borderRadius:5,color:"#364a6a",padding:"2px 7px",cursor:"pointer",fontSize:16,letterSpacing:1,lineHeight:1.1}}
+        style={{background:"none",border:"1px solid #2a3f5f",borderRadius:5,color:"#364a6a",padding:"2px 7px",cursor:"pointer",fontSize:16,letterSpacing:1,lineHeight:1.1}}
         onMouseEnter={e=>e.currentTarget.style.borderColor="#4f8ef7"}
-        onMouseLeave={e=>e.currentTarget.style.borderColor="#1a2540"}
+        onMouseLeave={e=>e.currentTarget.style.borderColor="#2a3f5f"}
       >···</button>
       {open && (
-        <div style={{position:"absolute",left:0,top:"110%",zIndex:400,background:"#080f1c",border:"1px solid #1a2540",borderRadius:8,minWidth:130,boxShadow:"0 10px 30px rgba(0,0,0,.8)",overflow:"hidden"}}>
+        <div style={{position:"absolute",left:0,top:"110%",zIndex:400,background:"#080f1c",border:"1px solid #2a3f5f",borderRadius:8,minWidth:130,boxShadow:"0 10px 30px rgba(0,0,0,.8)",overflow:"hidden"}}>
           {items.map((item,i) => (
             <div key={item.label} onClick={() => { item.action(); setOpen(false); }}
-              style={{padding:"9px 14px",fontSize:12,color:item.color,cursor:"pointer",display:"flex",alignItems:"center",gap:9,borderBottom:i<items.length-1?"1px solid #0d1828":"none"}}
-              onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+              style={{padding:"9px 14px",fontSize:12,color:item.color,cursor:"pointer",display:"flex",alignItems:"center",gap:9,borderBottom:i<items.length-1?"1px solid #1a2840":"none"}}
+              onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
               onMouseLeave={e=>e.currentTarget.style.background="transparent"}
             >
               <span style={{fontSize:14,opacity:.8}}>{item.icon}</span>{item.label}
@@ -231,27 +231,27 @@ function GeoSelector({ country, selected, onChange }) {
   const toggleItem = item => onChange(selected.includes(item) ? selected.filter(s => s !== item) : [...selected, item]);
   const QBtn = ({ label, active, onClick }) => (
     <button onClick={onClick} style={{padding:"3px 8px",borderRadius:4,fontSize:10,cursor:"pointer",border:"1px solid",
-      borderColor:active?"#4f8ef7":"#1a2540",background:active?"#1e3a6e":"#0b1220",color:active?"#7eb8ff":"#4a6080"}}>{label}</button>
+      borderColor:active?"#4f8ef7":"#2a3f5f",background:active?"#1e3a6e":"#14213d",color:active?"#7eb8ff":"#4a6080"}}>{label}</button>
   );
   return (
-    <div style={{border:"1px solid #1a2540",borderRadius:8,overflow:"hidden",background:"#060d18"}}>
-      <div style={{padding:"7px 10px",borderBottom:"1px solid #0d1828"}}>
+    <div style={{border:"1px solid #2a3f5f",borderRadius:8,overflow:"hidden",background:"#0f1a2e"}}>
+      <div style={{padding:"7px 10px",borderBottom:"1px solid #1a2840"}}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`Search ${isUS?"states":"provinces"}…`}
-          style={{width:"100%",background:"#0b1220",border:"1px solid #1a2540",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
+          style={{width:"100%",background:"#14213d",border:"1px solid #2a3f5f",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
       </div>
-      <div style={{padding:"6px 10px",borderBottom:"1px solid #0d1828",display:"flex",flexWrap:"wrap",gap:4}}>
+      <div style={{padding:"6px 10px",borderBottom:"1px solid #1a2840",display:"flex",flexWrap:"wrap",gap:4}}>
         <QBtn label={selected.length===items.length?"Deselect All":"Select All"} active={selected.length===items.length} onClick={toggleAll}/>
         {isUS && Object.keys(US_REGIONS).map(r => <QBtn key={r} label={r} active={US_REGIONS[r].every(s=>selected.includes(s))} onClick={()=>toggleRegion(r)}/>)}
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:3,padding:10,maxHeight:140,overflowY:"auto"}}>
         {filtered.map(s => (
           <button key={s} onClick={() => toggleItem(s)} style={{padding:"3px 8px",borderRadius:4,fontSize:11,border:"1px solid",cursor:"pointer",
-            borderColor:selected.includes(s)?"#4f8ef7":"#1a2540",background:selected.includes(s)?"#1e3a6e":"#0b1220",color:selected.includes(s)?"#7eb8ff":"#4a6080"}}>
+            borderColor:selected.includes(s)?"#4f8ef7":"#2a3f5f",background:selected.includes(s)?"#1e3a6e":"#14213d",color:selected.includes(s)?"#7eb8ff":"#4a6080"}}>
             {nameMap[s]}
           </button>
         ))}
       </div>
-      <div style={{padding:"3px 10px 7px",fontSize:10,color:"#1a2540"}}>{selected.length}/{items.length} selected</div>
+      <div style={{padding:"3px 10px 7px",fontSize:10,color:"#2a3f5f"}}>{selected.length}/{items.length} selected</div>
     </div>
   );
 }
@@ -268,20 +268,20 @@ function SearchDropdown({ label, options, value, onChange, style }) {
   const filtered = ["All",...options].filter(o => o.toLowerCase().includes(search.toLowerCase()));
   return (
     <div ref={ref} style={{position:"relative",...style}}>
-      <button onClick={() => setOpen(o=>!o)} style={{background:"#060d18",border:"1px solid #1a2540",borderRadius:6,color:value?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:120,fontFamily:"inherit"}}>
+      <button onClick={() => setOpen(o=>!o)} style={{background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:6,color:value?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:120,fontFamily:"inherit"}}>
         {value||label}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
       </button>
       {open && (
-        <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#060d18",border:"1px solid #1a2540",borderRadius:8,minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
+        <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:8,minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
           <div style={{padding:6}}>
             <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"
-              style={{width:"100%",background:"#0b1220",border:"1px solid #1a2540",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
+              style={{width:"100%",background:"#14213d",border:"1px solid #2a3f5f",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
           </div>
           <div style={{maxHeight:200,overflowY:"auto"}}>
             {filtered.map(o => (
               <div key={o} onClick={() => { onChange(o==="All"?"":o); setOpen(false); setSearch(""); }}
                 style={{padding:"7px 12px",fontSize:12,color:(!value&&o==="All")||value===o?"#7eb8ff":"#8899bb",cursor:"pointer",background:value===o?"#1e3a6e":"transparent"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+                onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
                 onMouseLeave={e=>e.currentTarget.style.background=value===o?"#1e3a6e":"transparent"}
               >{o}</div>
             ))}
@@ -309,25 +309,25 @@ function GeoFilterDropdown({ label, options, nameMap, value, onChange, style }) 
   const displayVal = value ? (nameMap[value] || value) : null;
   return (
     <div ref={ref} style={{position:"relative",...style}}>
-      <button onClick={() => setOpen(o=>!o)} style={{background:"#060d18",border:"1px solid #1a2540",borderRadius:6,color:displayVal?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:150,fontFamily:"inherit"}}>
+      <button onClick={() => setOpen(o=>!o)} style={{background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:6,color:displayVal?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:150,fontFamily:"inherit"}}>
         {displayVal||label}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
       </button>
       {open && (
-        <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#060d18",border:"1px solid #1a2540",borderRadius:8,minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
+        <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:8,minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
           <div style={{padding:6}}>
             <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"
-              style={{width:"100%",background:"#0b1220",border:"1px solid #1a2540",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
+              style={{width:"100%",background:"#14213d",border:"1px solid #2a3f5f",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
           </div>
           <div style={{maxHeight:220,overflowY:"auto"}}>
             <div onClick={() => { onChange(""); setOpen(false); setSearch(""); }}
               style={{padding:"7px 12px",fontSize:12,color:!value?"#7eb8ff":"#8899bb",cursor:"pointer",background:!value?"#1e3a6e":"transparent"}}
-              onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+              onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
               onMouseLeave={e=>e.currentTarget.style.background=!value?"#1e3a6e":"transparent"}
             >All</div>
             {filtered.map(o => (
               <div key={o} onClick={() => { onChange(o); setOpen(false); setSearch(""); }}
                 style={{padding:"7px 12px",fontSize:12,color:value===o?"#7eb8ff":"#8899bb",cursor:"pointer",background:value===o?"#1e3a6e":"transparent"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#0d1828"}
+                onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
                 onMouseLeave={e=>e.currentTarget.style.background=value===o?"#1e3a6e":"transparent"}
               >{nameMap[o] || o}</div>
             ))}
@@ -342,7 +342,7 @@ function EditModal({ row, onClose, onSave }) {
   const [form, setForm] = useState({ ...row });
   const [geoCountry, setGeoCountry] = useState(row.provinces.length ? "CA" : "US");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const inp = {width:"100%",background:"#060d18",border:"1px solid #1a2540",borderRadius:6,padding:"7px 10px",color:"#e0e8ff",fontSize:12,outline:"none",fontFamily:"inherit"};
+  const inp = {width:"100%",background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:6,padding:"7px 10px",color:"#e0e8ff",fontSize:12,outline:"none",fontFamily:"inherit"};
   const F = ({ label, span, children }) => (
     <div style={{marginBottom:14,gridColumn:span?"1/-1":undefined}}>
       <div style={{fontSize:10,color:"#364a6a",marginBottom:4,textTransform:"uppercase",letterSpacing:.9}}>{label}</div>
@@ -351,13 +351,13 @@ function EditModal({ row, onClose, onSave }) {
   );
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{background:"#080f1c",border:"1px solid #1a2540",borderRadius:12,width:"min(860px,100%)",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.9)"}}>
-        <div style={{padding:"15px 22px",borderBottom:"1px solid #0d1828",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{background:"#080f1c",border:"1px solid #2a3f5f",borderRadius:12,width:"min(860px,100%)",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.9)"}}>
+        <div style={{padding:"15px 22px",borderBottom:"1px solid #1a2840",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
             <div style={{fontSize:10,color:"#4f8ef7",textTransform:"uppercase",letterSpacing:1.2,marginBottom:2}}>Editing brand</div>
             <div style={{fontSize:17,fontWeight:700,color:"#e0e8ff"}}>{row.name}</div>
           </div>
-          <button onClick={onClose} style={{background:"none",border:"1px solid #1a2540",color:"#364a6a",fontSize:16,cursor:"pointer",borderRadius:6,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"1px solid #2a3f5f",color:"#364a6a",fontSize:16,cursor:"pointer",borderRadius:6,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
         </div>
         <div style={{overflowY:"auto",padding:"18px 22px",flex:1}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0 18px"}}>
@@ -378,7 +378,7 @@ function EditModal({ row, onClose, onSave }) {
             <F label="CPA ($)"><input type="number" value={form.cpa} onChange={e=>set("cpa",+e.target.value)} style={inp}/></F>
             <F label="Background Color">
               <div style={{display:"flex",gap:8}}>
-                <input type="color" value={form.bgColor} onChange={e=>set("bgColor",e.target.value)} style={{width:38,height:34,border:"1px solid #1a2540",borderRadius:6,background:"none",cursor:"pointer",padding:2,flexShrink:0}}/>
+                <input type="color" value={form.bgColor} onChange={e=>set("bgColor",e.target.value)} style={{width:38,height:34,border:"1px solid #2a3f5f",borderRadius:6,background:"none",cursor:"pointer",padding:2,flexShrink:0}}/>
                 <input value={form.bgColor} onChange={e=>set("bgColor",e.target.value)} style={inp}/>
               </div>
             </F>
@@ -400,7 +400,7 @@ function EditModal({ row, onClose, onSave }) {
                 {["US","CA"].map(c=>(
                   <button key={c} onClick={()=>{ setGeoCountry(c); c==="US"?set("provinces",[]):set("states",[]); }}
                     style={{padding:"5px 16px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:12,fontFamily:"inherit",
-                      borderColor:geoCountry===c?"#4f8ef7":"#1a2540",background:geoCountry===c?"#1e3a6e":"#060d18",color:geoCountry===c?"#7eb8ff":"#4a6080"}}>
+                      borderColor:geoCountry===c?"#4f8ef7":"#2a3f5f",background:geoCountry===c?"#1e3a6e":"#0f1a2e",color:geoCountry===c?"#7eb8ff":"#4a6080"}}>
                     {c==="US"?"United States":"Canada"}
                   </button>
                 ))}
@@ -409,8 +409,8 @@ function EditModal({ row, onClose, onSave }) {
             </div>
           </div>
         </div>
-        <div style={{padding:"13px 22px",borderTop:"1px solid #0d1828",display:"flex",justifyContent:"flex-end",gap:10}}>
-          <button onClick={onClose} style={{padding:"7px 18px",borderRadius:7,border:"1px solid #1a2540",background:"none",color:"#4a6080",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+        <div style={{padding:"13px 22px",borderTop:"1px solid #1a2840",display:"flex",justifyContent:"flex-end",gap:10}}>
+          <button onClick={onClose} style={{padding:"7px 18px",borderRadius:7,border:"1px solid #2a3f5f",background:"none",color:"#4a6080",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
           <button onClick={()=>onSave(form)} style={{padding:"7px 22px",borderRadius:7,border:"none",background:"#4f8ef7",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Save Changes</button>
         </div>
       </div>
@@ -421,12 +421,12 @@ function EditModal({ row, onClose, onSave }) {
 function ConfirmDialog({ name, onConfirm, onCancel }) {
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{background:"#080f1c",border:"1px solid #1a2540",borderRadius:10,padding:28,maxWidth:340,textAlign:"center"}}>
+      <div style={{background:"#080f1c",border:"1px solid #2a3f5f",borderRadius:10,padding:28,maxWidth:340,textAlign:"center"}}>
         <div style={{fontSize:22,marginBottom:10}}>🗑</div>
         <div style={{fontSize:13,color:"#c8d8f0",marginBottom:6}}>Delete <strong>{name}</strong>?</div>
         <div style={{fontSize:11,color:"#364a6a",marginBottom:22}}>This cannot be undone.</div>
         <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-          <button onClick={onCancel} style={{padding:"7px 18px",borderRadius:7,border:"1px solid #1a2540",background:"none",color:"#4a6080",fontSize:12,cursor:"pointer"}}>Cancel</button>
+          <button onClick={onCancel} style={{padding:"7px 18px",borderRadius:7,border:"1px solid #2a3f5f",background:"none",color:"#4a6080",fontSize:12,cursor:"pointer"}}>Cancel</button>
           <button onClick={onConfirm} style={{padding:"7px 18px",borderRadius:7,border:"none",background:"#f56565",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Delete</button>
         </div>
       </div>
@@ -434,9 +434,9 @@ function ConfirmDialog({ name, onConfirm, onCancel }) {
   );
 }
 
-const TH = {padding:"8px 12px",textAlign:"left",color:"#1e3050",fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #0d1828",userSelect:"none",whiteSpace:"nowrap"};
-const TD = {padding:"9px 12px",borderTop:"1px solid #060d18",verticalAlign:"top"};
-const Sep = () => <div style={{width:1,height:22,background:"#0d1828",flexShrink:0}}/>;
+const TH = {padding:"8px 12px",textAlign:"left",color:"#3a5070",fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:1,borderBottom:"1px solid #1a2840",userSelect:"none",whiteSpace:"nowrap"};
+const TD = {padding:"9px 12px",borderTop:"1px solid #0f1a2e",verticalAlign:"top"};
+const Sep = () => <div style={{width:1,height:22,background:"#1a2840",flexShrink:0}}/>;
 
 function App() {
   const [data, setData] = useState(MOCK_DATA);
@@ -447,7 +447,6 @@ function App() {
   const [regionFilter, setRegionFilter] = useState("");
   const [promoFilter, setPromoFilter] = useState("");
   const [providerFilter, setProviderFilter] = useState("");
-  const [betReadyFilter, setBetReadyFilter] = useState("");
   const [sortCol, setSortCol] = useState("name");
   const [sortDir, setSortDir] = useState(1);
   const [editRow, setEditRow] = useState(null);
@@ -459,7 +458,6 @@ function App() {
   
   const promoOptions = useMemo(() => [...new Set(data.map(r => r.promoCode).filter(Boolean))].sort(), [data]);
   const providerOptions = useMemo(() => [...new Set(data.flatMap(r => r.brandProviders))].sort(), [data]);
-  const betReadyOptions = useMemo(() => [...new Set(data.map(r => r.betReady).filter(Boolean))].sort(), [data]);
 
   const filtered = useMemo(() => data.filter(r => {
     if (catFilter !== "All" && r.category !== catFilter) return false;
@@ -471,7 +469,6 @@ function App() {
     if (regionFilter && ![...r.states,...r.provinces].includes(regionFilter)) return false;
     if (promoFilter && r.promoCode !== promoFilter) return false;
     if (providerFilter && !r.brandProviders.includes(providerFilter)) return false;
-    if (betReadyFilter && r.betReady !== betReadyFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       return r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
@@ -481,7 +478,7 @@ function App() {
     let av = a[sortCol], bv = b[sortCol];
     if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
     return av < bv ? -sortDir : av > bv ? sortDir : 0;
-  }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, promoFilter, providerFilter, betReadyFilter, search, sortCol, sortDir]);
+  }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, promoFilter, providerFilter, search, sortCol, sortDir]);
 
   const sort = col => { if(sortCol===col) setSortDir(d=>-d); else { setSortCol(col); setSortDir(1); } };
   const save = updated => { setData(d=>d.map(r=>r.id===updated.id?updated:r)); setEditRow(null); };
@@ -495,16 +492,16 @@ function App() {
   );
 
   return (
-    <div style={{fontFamily:"'DM Mono','Fira Code',monospace",background:"#040a12",minHeight:"100vh",color:"#c8d8f0"}}>
+    <div style={{fontFamily:"'DM Mono','Fira Code',monospace",background:"#0a1628",minHeight:"100vh",color:"#c8d8f0"}}>
       {/* Nav */}
-      <div style={{background:"#060d18",borderBottom:"1px solid #0d1828",padding:"9px 18px",display:"flex",alignItems:"center",gap:14}}>
+      <div style={{background:"#0f1a2e",borderBottom:"1px solid #1a2840",padding:"9px 18px",display:"flex",alignItems:"center",gap:14}}>
         <div style={{display:"flex",alignItems:"center",gap:7,flexShrink:0}}>
           <div style={{background:"#4f8ef7",color:"#fff",fontWeight:800,fontSize:12,padding:"5px 8px",borderRadius:5}}>Ss</div>
           <span style={{fontWeight:700,fontSize:13,color:"#e0e8ff"}}>SharpStakes</span>
         </div>
         <div style={{display:"flex",gap:1,overflowX:"auto"}}>
           {["All Info","Count","Betting Stats","Users","Links","Sportsbooks","Chatbot","Magic Buttons","Promocode","Ambassador Codes","Admin Logs","Overview"].map(tab=>(
-            <button key={tab} style={{background:tab==="Overview"?"#1a2d50":"none",border:"none",color:tab==="Overview"?"#7eb8ff":"#2a3a55",padding:"5px 10px",fontSize:10,cursor:"pointer",borderRadius:4,fontFamily:"inherit",fontWeight:tab==="Overview"?700:400,borderBottom:tab==="Overview"?"2px solid #4f8ef7":"2px solid transparent",whiteSpace:"nowrap"}}>{tab}</button>
+            <button key={tab} style={{background:tab==="Overview"?"#2a4060":"none",border:"none",color:tab==="Overview"?"#7eb8ff":"#3a5070",padding:"5px 10px",fontSize:10,cursor:"pointer",borderRadius:4,fontFamily:"inherit",fontWeight:tab==="Overview"?700:400,borderBottom:tab==="Overview"?"2px solid #4f8ef7":"2px solid transparent",whiteSpace:"nowrap"}}>{tab}</button>
           ))}
         </div>
       </div>
@@ -514,16 +511,16 @@ function App() {
           <div style={{fontSize:18,fontWeight:700,color:"#ddeeff"}}>Overview</div>
           <div style={{fontSize:11,color:"#1e3050"}}>{filtered.length} of {data.length} brands</div>
         </div>
-        <div style={{fontSize:11,color:"#1a2540",marginBottom:14}}>Filter, sort and edit all brands in one place</div>
+        <div style={{fontSize:11,color:"#2a3f5f",marginBottom:14}}>Filter, sort and edit all brands in one place</div>
 
-        <div style={{background:"#060d18",border:"1px solid #0d1828",borderRadius:10,padding:"11px 16px",marginBottom:12,display:"flex",flexWrap:"wrap",gap:10,alignItems:"center"}}>
-          <div style={{display:"flex",gap:2,background:"#040a12",borderRadius:6,padding:3}}>
+        <div style={{background:"#0f1a2e",border:"1px solid #1a2840",borderRadius:10,padding:"11px 16px",marginBottom:12,display:"flex",flexWrap:"wrap",gap:10,alignItems:"center"}}>
+          <div style={{display:"flex",gap:2,background:"#0a1628",borderRadius:6,padding:3}}>
             {["All","Casino","Sportsbook"].map(c=>(
               <button key={c} onClick={()=>setCatFilter(c)} style={{padding:"4px 12px",borderRadius:4,border:"none",cursor:"pointer",fontSize:11,fontFamily:"inherit",background:catFilter===c?"#4f8ef7":"transparent",color:catFilter===c?"#fff":"#2a3a55"}}>{c}</button>
             ))}
           </div>
           <Sep/>
-          <div style={{display:"flex",gap:2,background:"#040a12",borderRadius:6,padding:3}}>
+          <div style={{display:"flex",gap:2,background:"#0a1628",borderRadius:6,padding:3}}>
             {[{k:"All",tip:"Show everything"},{k:"Visible",tip:"Not hidden, or hidden + ambassador code"},{k:"Hidden",tip:"Hidden with no ambassador code"}].map(v=>(
               <button key={v.k} onClick={()=>setVisFilter(v.k)} title={v.tip}
                 style={{padding:"4px 11px",borderRadius:4,border:"none",cursor:"pointer",fontSize:11,fontFamily:"inherit",background:visFilter===v.k?"#4f8ef7":"transparent",color:visFilter===v.k?"#fff":"#2a3a55"}}>{v.k}</button>
@@ -535,19 +532,18 @@ function App() {
           <SearchDropdown label="Country" options={["US","CA"]} value={countryFilter} onChange={v=>{setCountryFilter(v);setRegionFilter("");}}/>
           {countryFilter
             ? <GeoFilterDropdown label={countryFilter==="CA"?"Province":"State"} options={geoOptions} nameMap={geoNameMap} value={regionFilter} onChange={setRegionFilter}/>
-            : <button disabled style={{background:"#040a12",border:"1px solid #0d1828",borderRadius:6,color:"#1e3050",padding:"5px 12px",fontSize:12,minWidth:150,fontFamily:"inherit",cursor:"not-allowed"}}>State / Province ▾</button>
+            : <button disabled style={{background:"#0a1628",border:"1px solid #1a2840",borderRadius:6,color:"#1e3050",padding:"5px 12px",fontSize:12,minWidth:150,fontFamily:"inherit",cursor:"not-allowed"}}>State / Province ▾</button>
           }
           <Sep/>
           <SearchDropdown label="Promo Code" options={promoOptions} value={promoFilter} onChange={setPromoFilter}/>
           <SearchDropdown label="Provider" options={providerOptions} value={providerFilter} onChange={setProviderFilter}/>
-          <SearchDropdown label="Bet Ready" options={betReadyOptions} value={betReadyFilter} onChange={setBetReadyFilter}/>
           <div style={{marginLeft:"auto"}}>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search brands…"
-              style={{background:"#040a12",border:"1px solid #0d1828",borderRadius:6,padding:"5px 11px",color:"#c0d0ee",fontSize:12,outline:"none",width:170,fontFamily:"inherit"}}/>
+              style={{background:"#0a1628",border:"1px solid #1a2840",borderRadius:6,padding:"5px 11px",color:"#c0d0ee",fontSize:12,outline:"none",width:170,fontFamily:"inherit"}}/>
           </div>
         </div>
 
-        <div style={{fontSize:10,color:"#1a2540",marginBottom:12,display:"flex",gap:18,flexWrap:"wrap"}}>
+        <div style={{fontSize:10,color:"#2a3f5f",marginBottom:12,display:"flex",gap:18,flexWrap:"wrap"}}>
           <span><span style={{color:"#4caf82"}}>●</span> Visible = not hidden · or hidden with an ambassador code</span>
           <span><span style={{color:"#f56565"}}>●</span> Hidden = hidden &amp; no ambassador code</span>
           <span><span style={{color:"#f5a623"}}>*</span> Hidden* = hidden but has ambassador code (counts as Visible)</span>
@@ -581,33 +577,33 @@ function App() {
           </thead>
           <tbody>
             {filtered.map(row => (
-              <tr key={row.id} style={{background:"#060d18",transition:"background .1s"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#080f1c"}
-                onMouseLeave={e=>e.currentTarget.style.background="#060d18"}
+              <tr key={row.id} style={{background:"#0f1a2e",transition:"background .1s"}}
+                onMouseEnter={e=>e.currentTarget.style.background="#14213d"}
+                onMouseLeave={e=>e.currentTarget.style.background="#0f1a2e"}
               >
                 <td style={{...TD,padding:"8px 4px 8px 10px",verticalAlign:"middle"}}>
                   <ThreeDotMenu onEdit={()=>setEditRow(row)} onDelete={()=>setDeleteId(row.id)} onDuplicate={()=>dup(row)}/>
                 </td>
-                <td style={{...TD,fontWeight:600,color:"#ddeeff",maxWidth:160,verticalAlign:"middle"}}>
-                  <div style={{fontSize:9,color:"#1e3050",marginBottom:1}}>{row.logo}</div>
+                <td style={{...TD,fontWeight:600,color:"#e8f0ff",maxWidth:160,verticalAlign:"middle"}}>
+                  <div style={{fontSize:9,color:"#4a6080",marginBottom:1}}>{row.logo}</div>
                   {row.name}
                 </td>
                 <td style={{...TD,verticalAlign:"middle"}}><Badge label={row.category} bg={row.category==="Casino"?"#0e1e3a":"#0e2a1e"} color={row.category==="Casino"?"#7eb8ff":"#6dbb9a"}/></td>
                 <td style={{...TD,textAlign:"center",verticalAlign:"middle"}}>
-                  <span style={{color:row.socialCasino?"#a78bfa":"#1a2540",fontWeight:row.socialCasino?700:400}}>{row.socialCasino?"True":"False"}</span>
+                  <span style={{color:row.socialCasino?"#a78bfa":"#2a3f5f",fontWeight:row.socialCasino?700:400}}>{row.socialCasino?"True":"False"}</span>
                 </td>
                 <td style={{...TD,verticalAlign:"middle"}}>
                   <span style={{color:"#f5a623",fontWeight:700}}>{row.sharpScore.toFixed(1)}</span>
-                  <span style={{color:"#1e3050"}}>/5</span>
+                  <span style={{color:"#4a6080"}}>/5</span>
                 </td>
                 <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>${row.minDeposit}</td>
-                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.maxDeposit?`$${row.maxDeposit.toLocaleString()}`:<span style={{color:"#1a2540"}}>—</span>}</td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.maxDeposit?`$${row.maxDeposit.toLocaleString()}`:<span style={{color:"#2a3f5f"}}>—</span>}</td>
                 <td style={{...TD,color:"#a8e6a3",verticalAlign:"middle"}}>${row.cpa}</td>
                 <td style={{...TD,verticalAlign:"middle"}}><Swatch color={row.bgColor}/></td>
                 <td style={{...TD,textAlign:"center",verticalAlign:"middle"}}>
                   {isTrulyHidden(row) && <span style={{color:"#f56565",fontSize:11,fontWeight:700}}>Yes</span>}
                   {row.hidden && !isTrulyHidden(row) && <span style={{color:"#f5a623",fontSize:11}}>Yes*</span>}
-                  {!row.hidden && <span style={{color:"#1e3050",fontSize:11}}>No</span>}
+                  {!row.hidden && <span style={{color:"#4a6080",fontSize:11}}>No</span>}
                 </td>
                 <td style={{...TD,verticalAlign:"middle"}}>
                   <div style={{display:"flex",flexWrap:"wrap",gap:3}}>{row.brandProviders.map(p=><Badge key={p} label={p}/>)}</div>
@@ -619,17 +615,17 @@ function App() {
                 <td style={{...TD,verticalAlign:"middle"}}>
                   <CopyLinkCell link={row.link}/>
                 </td>
-                <td style={{...TD,color:"#f5a623",verticalAlign:"middle"}}>{row.promoCode||<span style={{color:"#1a2540"}}>—</span>}</td>
+                <td style={{...TD,color:"#f5a623",verticalAlign:"middle"}}>{row.promoCode||<span style={{color:"#2a3f5f"}}>—</span>}</td>
                 <td style={{...TD,color:"#6a80aa",verticalAlign:"middle"}}>{row.logo}</td>
-                <td style={{...TD,color:"#a78bfa",verticalAlign:"middle"}}>{row.ambassadorCode||<span style={{color:"#1a2540"}}>—</span>}</td>
-                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?`$${row.ambassadorMinDeposit}`:<span style={{color:"#1a2540"}}>—</span>}</td>
-                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?row.ambassadorPoints:<span style={{color:"#1a2540"}}>—</span>}</td>
+                <td style={{...TD,color:"#a78bfa",verticalAlign:"middle"}}>{row.ambassadorCode||<span style={{color:"#2a3f5f"}}>—</span>}</td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?`$${row.ambassadorMinDeposit}`:<span style={{color:"#2a3f5f"}}>—</span>}</td>
+                <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCode?row.ambassadorPoints:<span style={{color:"#2a3f5f"}}>—</span>}</td>
               </tr>
             ))}
           </tbody>
         </table>
         {filtered.length===0 && (
-          <div style={{textAlign:"center",padding:48,color:"#1a2540",fontSize:13}}>No brands match current filters.</div>
+          <div style={{textAlign:"center",padding:48,color:"#3a5070",fontSize:13}}>No brands match current filters.</div>
         )}
       </div>
 
