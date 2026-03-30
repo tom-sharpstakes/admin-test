@@ -340,7 +340,7 @@ function GeoFilterDropdown({ label, options, nameMap, value, onChange, style }) 
 
 function EditModal({ row, onClose, onSave }) {
   const [form, setForm] = useState({ ...row });
-  const [geoCountry, setGeoCountry] = useState(row.provinces.length ? "CA" : "US");
+  const [geoTab, setGeoTab] = useState("US");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const inp = {width:"100%",background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:6,padding:"7px 10px",color:"#e0e8ff",fontSize:12,outline:"none",fontFamily:"inherit"};
   const F = ({ label, span, children }) => (
@@ -398,14 +398,14 @@ function EditModal({ row, onClose, onSave }) {
               <div style={{fontSize:10,color:"#364a6a",marginBottom:6,textTransform:"uppercase",letterSpacing:.9}}>Geography</div>
               <div style={{display:"flex",gap:8,marginBottom:8}}>
                 {["US","CA"].map(c=>(
-                  <button key={c} onClick={()=>{ setGeoCountry(c); c==="US"?set("provinces",[]):set("states",[]); }}
+                  <button key={c} onClick={()=>setGeoTab(c)}
                     style={{padding:"5px 16px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:12,fontFamily:"inherit",
-                      borderColor:geoCountry===c?"#4f8ef7":"#2a3f5f",background:geoCountry===c?"#1e3a6e":"#0f1a2e",color:geoCountry===c?"#7eb8ff":"#4a6080"}}>
+                      borderColor:geoTab===c?"#4f8ef7":"#2a3f5f",background:geoTab===c?"#1e3a6e":"#0f1a2e",color:geoTab===c?"#7eb8ff":"#4a6080"}}>
                     {c==="US"?"United States":"Canada"}
                   </button>
                 ))}
               </div>
-              <GeoSelector country={geoCountry} selected={geoCountry==="US"?form.states:form.provinces} onChange={v=>geoCountry==="US"?set("states",v):set("provinces",v)}/>
+              <GeoSelector country={geoTab} selected={geoTab==="US"?form.states:form.provinces} onChange={v=>geoTab==="US"?set("states",v):set("provinces",v)}/>
             </div>
           </div>
         </div>
@@ -447,6 +447,7 @@ function App() {
   const [regionFilter, setRegionFilter] = useState("");
   const [promoFilter, setPromoFilter] = useState("");
   const [providerFilter, setProviderFilter] = useState("");
+  const [ambassadorFilter, setAmbassadorFilter] = useState("");
   const [sortCol, setSortCol] = useState("name");
   const [sortDir, setSortDir] = useState(1);
   const [editRow, setEditRow] = useState(null);
@@ -458,6 +459,7 @@ function App() {
   
   const promoOptions = useMemo(() => [...new Set(data.map(r => r.promoCode).filter(Boolean))].sort(), [data]);
   const providerOptions = useMemo(() => [...new Set(data.flatMap(r => r.brandProviders))].sort(), [data]);
+  const ambassadorOptions = useMemo(() => [...new Set(data.map(r => r.ambassadorCode).filter(Boolean))].sort(), [data]);
 
   const filtered = useMemo(() => data.filter(r => {
     if (catFilter !== "All" && r.category !== catFilter) return false;
@@ -469,6 +471,7 @@ function App() {
     if (regionFilter && ![...r.states,...r.provinces].includes(regionFilter)) return false;
     if (promoFilter && r.promoCode !== promoFilter) return false;
     if (providerFilter && !r.brandProviders.includes(providerFilter)) return false;
+    if (ambassadorFilter && r.ambassadorCode !== ambassadorFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       return r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
@@ -478,7 +481,7 @@ function App() {
     let av = a[sortCol], bv = b[sortCol];
     if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
     return av < bv ? -sortDir : av > bv ? sortDir : 0;
-  }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, promoFilter, providerFilter, search, sortCol, sortDir]);
+  }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, promoFilter, providerFilter, ambassadorFilter, search, sortCol, sortDir]);
 
   const sort = col => { if(sortCol===col) setSortDir(d=>-d); else { setSortCol(col); setSortDir(1); } };
   const save = updated => { setData(d=>d.map(r=>r.id===updated.id?updated:r)); setEditRow(null); };
@@ -537,6 +540,7 @@ function App() {
           <Sep/>
           <SearchDropdown label="Promo Code" options={promoOptions} value={promoFilter} onChange={setPromoFilter}/>
           <SearchDropdown label="Provider" options={providerOptions} value={providerFilter} onChange={setProviderFilter}/>
+          <SearchDropdown label="Ambassador Code" options={ambassadorOptions} value={ambassadorFilter} onChange={setAmbassadorFilter}/>
           <div style={{marginLeft:"auto"}}>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search brands…"
               style={{background:"#0a1628",border:"1px solid #1a2840",borderRadius:6,padding:"5px 11px",color:"#c0d0ee",fontSize:12,outline:"none",width:170,fontFamily:"inherit"}}/>
