@@ -256,7 +256,7 @@ function GeoSelector({ country, selected, onChange }) {
   );
 }
 
-function SearchDropdown({ label, options, value, onChange, style }) {
+function MultiSelectDropdown({ label, options, value, onChange, style }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef();
@@ -265,11 +265,16 @@ function SearchDropdown({ label, options, value, onChange, style }) {
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
-  const filtered = ["All",...options].filter(o => o.toLowerCase().includes(search.toLowerCase()));
+  const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
+  const toggle = o => onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o]);
+  const dispLabel = value.length === 0 ? label : value.length === 1 ? value[0] : `${value[0]} +${value.length-1}`;
+  const Chk = ({ sel }) => (
+    <span style={{width:13,height:13,borderRadius:3,border:"1px solid",borderColor:sel?"#4f8ef7":"#2a3f5f",background:sel?"#4f8ef7":"transparent",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff",flexShrink:0}}>{sel?"✓":""}</span>
+  );
   return (
     <div ref={ref} style={{position:"relative",...style}}>
-      <button onClick={() => setOpen(o=>!o)} style={{background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:6,color:value?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:120,fontFamily:"inherit"}}>
-        {value||label}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
+      <button onClick={() => setOpen(o=>!o)} style={{background:"#0f1a2e",border:"1px solid",borderColor:value.length?"#4f8ef7":"#2a3f5f",borderRadius:6,color:value.length?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:120,fontFamily:"inherit"}}>
+        {dispLabel}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
       </button>
       {open && (
         <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:8,minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
@@ -277,22 +282,35 @@ function SearchDropdown({ label, options, value, onChange, style }) {
             <input autoFocus value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"
               style={{width:"100%",background:"#14213d",border:"1px solid #2a3f5f",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
           </div>
-          <div style={{maxHeight:200,overflowY:"auto"}}>
-            {filtered.map(o => (
-              <div key={o} onClick={() => { onChange(o==="All"?"":o); setOpen(false); setSearch(""); }}
-                style={{padding:"7px 12px",fontSize:12,color:(!value&&o==="All")||value===o?"#7eb8ff":"#8899bb",cursor:"pointer",background:value===o?"#1e3a6e":"transparent"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
-                onMouseLeave={e=>e.currentTarget.style.background=value===o?"#1e3a6e":"transparent"}
-              >{o}</div>
-            ))}
+          <div style={{maxHeight:220,overflowY:"auto"}}>
+            <div onClick={() => { onChange([]); setSearch(""); }}
+              style={{padding:"7px 12px",fontSize:12,color:!value.length?"#7eb8ff":"#8899bb",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+              onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+            ><Chk sel={!value.length}/> All</div>
+            {filtered.map(o => {
+              const sel = value.includes(o);
+              return (
+                <div key={o} onClick={() => toggle(o)}
+                  style={{padding:"7px 12px",fontSize:12,color:sel?"#7eb8ff":"#8899bb",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
+                  onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                ><Chk sel={sel}/>{o}</div>
+              );
+            })}
           </div>
+          {value.length > 0 && (
+            <div style={{padding:"5px 12px 8px",borderTop:"1px solid #1a2840",fontSize:10,color:"#f56565",cursor:"pointer"}} onClick={() => { onChange([]); setOpen(false); setSearch(""); }}>
+              Clear selection ✕
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// State/province filter dropdown — full names with abbreviation search
+// State/province filter dropdown — multi-select with full names
 function GeoFilterDropdown({ label, options, nameMap, value, onChange, style }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -306,11 +324,15 @@ function GeoFilterDropdown({ label, options, nameMap, value, onChange, style }) 
     o.toLowerCase().includes(search.toLowerCase()) ||
     (nameMap[o]||"").toLowerCase().includes(search.toLowerCase())
   );
-  const displayVal = value ? (nameMap[value] || value) : null;
+  const toggle = o => onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o]);
+  const dispLabel = value.length === 0 ? label : value.length === 1 ? (nameMap[value[0]]||value[0]) : `${nameMap[value[0]]||value[0]} +${value.length-1}`;
+  const Chk = ({ sel }) => (
+    <span style={{width:13,height:13,borderRadius:3,border:"1px solid",borderColor:sel?"#4f8ef7":"#2a3f5f",background:sel?"#4f8ef7":"transparent",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff",flexShrink:0}}>{sel?"✓":""}</span>
+  );
   return (
     <div ref={ref} style={{position:"relative",...style}}>
-      <button onClick={() => setOpen(o=>!o)} style={{background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:6,color:displayVal?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:150,fontFamily:"inherit"}}>
-        {displayVal||label}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
+      <button onClick={() => setOpen(o=>!o)} style={{background:"#0f1a2e",border:"1px solid",borderColor:value.length?"#4f8ef7":"#2a3f5f",borderRadius:6,color:value.length?"#c0d0ee":"#364a6a",padding:"5px 12px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,minWidth:150,fontFamily:"inherit"}}>
+        {dispLabel}<span style={{marginLeft:"auto",opacity:.4}}>▾</span>
       </button>
       {open && (
         <div style={{position:"absolute",top:"110%",left:0,zIndex:300,background:"#0f1a2e",border:"1px solid #2a3f5f",borderRadius:8,minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,.8)"}}>
@@ -319,19 +341,27 @@ function GeoFilterDropdown({ label, options, nameMap, value, onChange, style }) 
               style={{width:"100%",background:"#14213d",border:"1px solid #2a3f5f",borderRadius:5,padding:"5px 8px",color:"#e0e8ff",fontSize:12,outline:"none"}}/>
           </div>
           <div style={{maxHeight:220,overflowY:"auto"}}>
-            <div onClick={() => { onChange(""); setOpen(false); setSearch(""); }}
-              style={{padding:"7px 12px",fontSize:12,color:!value?"#7eb8ff":"#8899bb",cursor:"pointer",background:!value?"#1e3a6e":"transparent"}}
+            <div onClick={() => { onChange([]); setSearch(""); }}
+              style={{padding:"7px 12px",fontSize:12,color:!value.length?"#7eb8ff":"#8899bb",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
               onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
-              onMouseLeave={e=>e.currentTarget.style.background=!value?"#1e3a6e":"transparent"}
-            >All</div>
-            {filtered.map(o => (
-              <div key={o} onClick={() => { onChange(o); setOpen(false); setSearch(""); }}
-                style={{padding:"7px 12px",fontSize:12,color:value===o?"#7eb8ff":"#8899bb",cursor:"pointer",background:value===o?"#1e3a6e":"transparent"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
-                onMouseLeave={e=>e.currentTarget.style.background=value===o?"#1e3a6e":"transparent"}
-              >{nameMap[o] || o}</div>
-            ))}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+            ><Chk sel={!value.length}/> All</div>
+            {filtered.map(o => {
+              const sel = value.includes(o);
+              return (
+                <div key={o} onClick={() => toggle(o)}
+                  style={{padding:"7px 12px",fontSize:12,color:sel?"#7eb8ff":"#8899bb",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#1a2840"}
+                  onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                ><Chk sel={sel}/>{nameMap[o] || o}</div>
+              );
+            })}
           </div>
+          {value.length > 0 && (
+            <div style={{padding:"5px 12px 8px",borderTop:"1px solid #1a2840",fontSize:10,color:"#f56565",cursor:"pointer"}} onClick={() => { onChange([]); setOpen(false); setSearch(""); }}>
+              Clear selection ✕
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -354,8 +384,8 @@ function EditModal({ row, onClose, onSave }) {
       <div style={{background:"#080f1c",border:"1px solid #2a3f5f",borderRadius:12,width:"min(860px,100%)",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.9)"}}>
         <div style={{padding:"15px 22px",borderBottom:"1px solid #1a2840",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
-            <div style={{fontSize:10,color:"#4f8ef7",textTransform:"uppercase",letterSpacing:1.2,marginBottom:2}}>Editing brand</div>
-            <div style={{fontSize:17,fontWeight:700,color:"#e0e8ff"}}>{row.name}</div>
+            <div style={{fontSize:10,color:"#4f8ef7",textTransform:"uppercase",letterSpacing:1.2,marginBottom:2}}>{row.name ? "Editing brand" : "New brand"}</div>
+            <div style={{fontSize:17,fontWeight:700,color:"#e0e8ff"}}>{row.name || "Untitled"}</div>
           </div>
           <button onClick={onClose} style={{background:"none",border:"1px solid #2a3f5f",color:"#364a6a",fontSize:16,cursor:"pointer",borderRadius:6,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
         </div>
@@ -408,6 +438,9 @@ function EditModal({ row, onClose, onSave }) {
             </F>
             <F label="Ambassador Min Deposit ($)"><input type="number" value={form.ambassadorMinDeposit} onChange={e=>set("ambassadorMinDeposit",+e.target.value)} style={inp}/></F>
             <F label="Ambassador Points"><input type="number" value={form.ambassadorPoints} onChange={e=>set("ambassadorPoints",+e.target.value)} style={inp}/></F>
+            <F label="Note" span>
+              <textarea value={form.note||""} onChange={e=>set("note",e.target.value)} rows={2} placeholder="Internal note about this campaign…" style={{...inp,resize:"vertical"}}/>
+            </F>
             <F label="Hidden"><Toggle value={form.hidden} onChange={v=>set("hidden",v)}/></F>
             <F label="Social Casino"><Toggle value={form.socialCasino} onChange={v=>set("socialCasino",v)}/></F>
             <F label="Brand Providers (comma-separated)" span>
@@ -462,20 +495,28 @@ function App() {
   const [catFilter, setCatFilter] = useState("All");
   const [visFilter, setVisFilter] = useState("All");
   const [ambFilter, setAmbFilter] = useState(false);
-  const [countryFilter, setCountryFilter] = useState("");
-  const [regionFilter, setRegionFilter] = useState("");
-  const [promoFilter, setPromoFilter] = useState("");
-  const [providerFilter, setProviderFilter] = useState("");
-  const [ambassadorFilter, setAmbassadorFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState([]);
+  const [regionFilter, setRegionFilter] = useState([]);
+  const [promoFilter, setPromoFilter] = useState([]);
+  const [providerFilter, setProviderFilter] = useState([]);
+  const [ambassadorFilter, setAmbassadorFilter] = useState([]);
   const [sortCol, setSortCol] = useState("name");
   const [sortDir, setSortDir] = useState(1);
   const [editRow, setEditRow] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [search, setSearch] = useState("");
 
-  const geoOptions     = useMemo(() => countryFilter==="CA" ? CA_PROVINCES    : ALL_US_STATES,   [countryFilter]);
-  const geoNameMap     = useMemo(() => countryFilter==="CA" ? CA_PROVINCE_NAMES : US_STATE_NAMES, [countryFilter]);
-  
+  // Build geo options based on selected countries (multi-select)
+  const geoOptions = useMemo(() => {
+    const hasUS = countryFilter.length === 0 || countryFilter.includes("US");
+    const hasCA = countryFilter.length === 0 || countryFilter.includes("CA");
+    return [
+      ...(hasUS ? ALL_US_STATES : []),
+      ...(hasCA ? CA_PROVINCES : []),
+    ];
+  }, [countryFilter]);
+  const geoNameMap = useMemo(() => ({ ...US_STATE_NAMES, ...CA_PROVINCE_NAMES }), []);
+
   const promoOptions = useMemo(() => [...new Set(data.flatMap(r => r.promoCodes))].sort(), [data]);
   const providerOptions = useMemo(() => [...new Set(data.flatMap(r => r.brandProviders))].sort(), [data]);
   const ambassadorOptions = useMemo(() => [...new Set(data.flatMap(r => r.ambassadorCodes))].sort(), [data]);
@@ -485,12 +526,15 @@ function App() {
     if (visFilter === "Visible" && !isVisible(r)) return false;
     if (visFilter === "Hidden" && !isTrulyHidden(r)) return false;
     if (ambFilter && r.ambassadorCodes.length === 0) return false;
-    if (countryFilter === "US" && r.provinces.length && !r.states.length) return false;
-    if (countryFilter === "CA" && r.states.length && !r.provinces.length) return false;
-    if (regionFilter && ![...r.states,...r.provinces].includes(regionFilter)) return false;
-    if (promoFilter && !r.promoCodes.includes(promoFilter)) return false;
-    if (providerFilter && !r.brandProviders.includes(providerFilter)) return false;
-    if (ambassadorFilter && !r.ambassadorCodes.includes(ambassadorFilter)) return false;
+    if (countryFilter.length > 0) {
+      const hasUS = r.states.length > 0;
+      const hasCA = r.provinces.length > 0;
+      if (!countryFilter.some(c => (c === "US" && hasUS) || (c === "CA" && hasCA))) return false;
+    }
+    if (regionFilter.length > 0 && !regionFilter.some(g => [...r.states, ...r.provinces].includes(g))) return false;
+    if (promoFilter.length > 0 && !promoFilter.some(p => r.promoCodes.includes(p))) return false;
+    if (providerFilter.length > 0 && !providerFilter.some(p => r.brandProviders.includes(p))) return false;
+    if (ambassadorFilter.length > 0 && !ambassadorFilter.some(c => r.ambassadorCodes.includes(c))) return false;
     if (search) {
       const q = search.toLowerCase();
       return r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
@@ -503,9 +547,19 @@ function App() {
   }), [data, catFilter, visFilter, ambFilter, countryFilter, regionFilter, promoFilter, providerFilter, ambassadorFilter, search, sortCol, sortDir]);
 
   const sort = col => { if(sortCol===col) setSortDir(d=>-d); else { setSortCol(col); setSortDir(1); } };
-  const save = updated => { setData(d=>d.map(r=>r.id===updated.id?updated:r)); setEditRow(null); };
+  const save = updated => {
+    setData(d => d.some(r => r.id === updated.id) ? d.map(r => r.id===updated.id ? updated : r) : [updated, ...d]);
+    setEditRow(null);
+  };
   const del  = id => { setData(d=>d.filter(r=>r.id!==id)); setDeleteId(null); };
   const dup  = row => setData(d => [{ ...row, id:Date.now(), name:row.name+" (copy)", hidden:true }, ...d]);
+  const newBrand = () => setEditRow({
+    id: Date.now(), name:"", category:"Casino", socialCasino:false, description:"",
+    sharpScore:0, minDeposit:0, maxDeposit:0, cpa:0, bgColor:"#1a1a2e", hidden:false,
+    brandProviders:[], provinces:[], states:[], betReady:"", link:"", promoCodes:[],
+    logo:"", ambassadorCodes:[], ambassadorMinDeposit:0, ambassadorPoints:0,
+    testStatus:"Pending", note:"",
+  });
 
   const Th = ({ col, label }) => (
     <th onClick={col?()=>sort(col):undefined} style={{...TH,cursor:col?"pointer":"default"}}>
@@ -551,18 +605,20 @@ function App() {
           <Sep/>
           <Toggle value={ambFilter} onChange={setAmbFilter} label="Has Ambassador Code"/>
           <Sep/>
-          <SearchDropdown label="Country" options={["US","CA"]} value={countryFilter} onChange={v=>{setCountryFilter(v);setRegionFilter("");}}/>
-          {countryFilter
-            ? <GeoFilterDropdown label={countryFilter==="CA"?"Province":"State"} options={geoOptions} nameMap={geoNameMap} value={regionFilter} onChange={setRegionFilter}/>
-            : <button disabled style={{background:"#0a1628",border:"1px solid #1a2840",borderRadius:6,color:"#1e3050",padding:"5px 12px",fontSize:12,minWidth:150,fontFamily:"inherit",cursor:"not-allowed"}}>State / Province ▾</button>
-          }
+          <MultiSelectDropdown label="Country" options={["US","CA"]} value={countryFilter} onChange={v=>{setCountryFilter(v);setRegionFilter([]);}}/>
+          <GeoFilterDropdown label="State / Province" options={geoOptions} nameMap={geoNameMap} value={regionFilter} onChange={setRegionFilter}/>
           <Sep/>
-          <SearchDropdown label="Promo Code" options={promoOptions} value={promoFilter} onChange={setPromoFilter}/>
-          <SearchDropdown label="Provider" options={providerOptions} value={providerFilter} onChange={setProviderFilter}/>
-          <SearchDropdown label="Ambassador Code" options={ambassadorOptions} value={ambassadorFilter} onChange={setAmbassadorFilter}/>
-          <div style={{marginLeft:"auto"}}>
+          <MultiSelectDropdown label="Promo Code" options={promoOptions} value={promoFilter} onChange={setPromoFilter}/>
+          <MultiSelectDropdown label="Provider" options={providerOptions} value={providerFilter} onChange={setProviderFilter}/>
+          <MultiSelectDropdown label="Ambassador Code" options={ambassadorOptions} value={ambassadorFilter} onChange={setAmbassadorFilter}/>
+          <div style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search brands…"
               style={{background:"#0a1628",border:"1px solid #1a2840",borderRadius:6,padding:"5px 11px",color:"#c0d0ee",fontSize:12,outline:"none",width:170,fontFamily:"inherit"}}/>
+            <button onClick={newBrand}
+              style={{padding:"5px 14px",borderRadius:6,border:"none",background:"#4f8ef7",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:6}}
+              onMouseEnter={e=>e.currentTarget.style.background="#6aa0f8"}
+              onMouseLeave={e=>e.currentTarget.style.background="#4f8ef7"}
+            >+ Add Brand</button>
           </div>
         </div>
 
@@ -596,7 +652,8 @@ function App() {
               <Th                            label="Promo Codes"/>
               <Th                            label="Amb. Codes"/>
               <Th col="ambassadorMinDeposit" label="Amb. Min $"/>
-              <Th col="ambassadorPoints"     label="Amb. Pts"/>
+              <Th                            label="Amb. Pts"/>
+              <Th                            label="Note"/>
             </tr>
           </thead>
           <tbody>
@@ -662,6 +719,9 @@ function App() {
                 </td>
                 <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCodes.length>0?`$${row.ambassadorMinDeposit}`:<span style={{color:"#2a3f5f"}}>—</span>}</td>
                 <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCodes.length>0?row.ambassadorPoints:<span style={{color:"#2a3f5f"}}>—</span>}</td>
+                <td style={{...TD,verticalAlign:"top",maxWidth:180}}>
+                  {row.note ? <span style={{fontSize:11,color:"#8899bb",whiteSpace:"pre-wrap"}}>{row.note}</span> : <span style={{color:"#2a3f5f"}}>—</span>}
+                </td>
               </tr>
             ))}
           </tbody>
