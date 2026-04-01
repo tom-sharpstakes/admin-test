@@ -165,6 +165,84 @@ function Badge({ label, bg="#131c2e", color="#6a80aa" }) {
   return <span style={{background:bg,color,fontSize:10,padding:"2px 7px",borderRadius:4,whiteSpace:"nowrap",display:"inline-block"}}>{label}</span>;
 }
 
+function InlineNoteCell({ note, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(note || "");
+  const textareaRef = useRef();
+
+  useEffect(() => {
+    if (editing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+    }
+  }, [editing]);
+
+  const handleSave = () => {
+    onSave(value);
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && e.ctrlKey) {
+      handleSave();
+    } else if (e.key === "Escape") {
+      setValue(note || "");
+      setEditing(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div style={{position:"relative"}}>
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleSave}
+          rows={3}
+          style={{
+            width:"100%",
+            background:"#14213d",
+            border:"1px solid #4f8ef7",
+            borderRadius:4,
+            padding:"5px 7px",
+            color:"#e0e8ff",
+            fontSize:11,
+            outline:"none",
+            resize:"vertical",
+            fontFamily:"inherit"
+          }}
+        />
+        <div style={{fontSize:9,color:"#4a6080",marginTop:2}}>Ctrl+Enter to save, Esc to cancel</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+      style={{
+        cursor:"pointer",
+        minHeight:20,
+        padding:"4px 6px",
+        borderRadius:4,
+        border:"1px solid transparent",
+        transition:"all .15s"
+      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = "#2a3f5f"}
+      onMouseLeave={e => e.currentTarget.style.borderColor = "transparent"}
+      title="Click to edit note"
+    >
+      {note ? (
+        <span style={{fontSize:11,color:"#8899bb",whiteSpace:"pre-wrap"}}>{note}</span>
+      ) : (
+        <span style={{fontSize:11,color:"#2a3f5f",fontStyle:"italic"}}>Click to add note…</span>
+      )}
+    </div>
+  );
+}
+
 function Toggle({ value, onChange, label }) {
   return (
     <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none"}}>
@@ -552,7 +630,7 @@ function App() {
     setEditRow(null);
   };
   const del  = id => { setData(d=>d.filter(r=>r.id!==id)); setDeleteId(null); };
-  const dup  = row => setData(d => [{ ...row, id:Date.now(), name:row.name+" (copy)", hidden:true }, ...d]);
+  const dup  = row => setEditRow({ ...row, id:Date.now(), name:row.name+" (copy)" });
   const newBrand = () => setEditRow({
     id: Date.now(), name:"", category:"Casino", socialCasino:false, description:"",
     sharpScore:0, minDeposit:0, maxDeposit:0, cpa:0, bgColor:"#1a1a2e", hidden:false,
@@ -720,7 +798,12 @@ function App() {
                 <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCodes.length>0?`$${row.ambassadorMinDeposit}`:<span style={{color:"#2a3f5f"}}>—</span>}</td>
                 <td style={{...TD,color:"#7eb8ff",verticalAlign:"middle"}}>{row.ambassadorCodes.length>0?row.ambassadorPoints:<span style={{color:"#2a3f5f"}}>—</span>}</td>
                 <td style={{...TD,verticalAlign:"top",maxWidth:180}}>
-                  {row.note ? <span style={{fontSize:11,color:"#8899bb",whiteSpace:"pre-wrap"}}>{row.note}</span> : <span style={{color:"#2a3f5f"}}>—</span>}
+                  <InlineNoteCell
+                    note={row.note}
+                    onSave={(newNote) => {
+                      setData(d => d.map(r => r.id === row.id ? { ...r, note: newNote } : r));
+                    }}
+                  />
                 </td>
               </tr>
             ))}
