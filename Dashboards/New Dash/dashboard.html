@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SharpStakes Sales Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #10141c;
+    --surface2: #161b26;
+    --border: #1e2535;
+    --accent: #00e5a0;
+    --accent2: #0070f3;
+    --text: #e8edf5;
+    --muted: #5a6480;
+    --danger: #ff4757;
+    --warn: #ffa502;
+    --gold: #f7b731;
+    --pill-bg: #1a2235;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 20px 28px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--text); }
+  .header-meta {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  #record-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* FILTERS */
+  .filters-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+  }
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    align-items: end;
+  }
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .filter-group label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'Space Mono', monospace;
+  }
+  .filter-group select,
+  .filter-group input[type="date"] {
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+  }
+  .filter-group select:focus,
+  .filter-group input[type="date"]:focus {
+    border-color: var(--accent);
+  }
+  .date-row { display: flex; gap: 6px; }
+  .date-row .filter-group { flex: 1; }
+
+  .btn-reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+    align-self: flex-end;
+    height: 32px;
+    white-space: nowrap;
+  }
+  .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* KPI CARDS */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 16px 28px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .kpi-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-family: 'Space Mono', monospace;
+  }
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .kpi-sub {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* MAIN GRID */
+  .main {
+    padding: 0 28px 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* SECTION */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .section.full { grid-column: 1 / -1; }
+  .section-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-header .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  /* STATUS TABLE */
+  .status-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .status-table th {
+    background: var(--surface2);
+    text-align: left;
+    padding: 8px 14px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    border-bottom: 1px solid var(--border);
+  }
+  .status-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(30,37,53,0.6);
+    vertical-align: top;
+  }
+  .status-table tr:last-child td { border-bottom: none; }
+  .status-table tr:hover td { background: var(--surface2); }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'Space Mono', monospace;
+    white-space: nowrap;
+  }
+  .s-completed { background: rgba(0,229,160,0.12); color: var(--accent); }
+  .s-signup { background: rgba(0,112,243,0.12); color: #60a5fa; }
+  .s-reviewing { background: rgba(247,183,49,0.12); color: var(--gold); }
+  .s-approved { background: rgba(0,229,160,0.08); color: #34d399; }
+  .s-rejected { background: rgba(255,71,87,0.12); color: var(--danger); }
+  .s-verified { background: rgba(130,80,255,0.12); color: #a78bfa; }
+
+  .count-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--accent);
+    min-width: 2px;
+    transition: width 0.3s;
+  }
+  .bar.s-signup-bar { background: #60a5fa; }
+  .bar.s-reviewing-bar { background: var(--gold); }
+  .bar.s-approved-bar { background: #34d399; }
+  .bar.s-rejected-bar { background: var(--danger); }
+  .bar.s-verified-bar { background: #a78bfa; }
+  .bar-pct { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* USERS in status */
+  .user-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 60px;
+    overflow: hidden;
+  }
+  .user-chips.expanded { max-height: none; }
+  .user-chip {
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: default;
+    white-space: nowrap;
+  }
+  .expand-btn {
+    font-size: 10px;
+    color: var(--accent);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* REP BREAKDOWN */
+  .rep-row {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(30,37,53,0.6);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .rep-row:last-child { border-bottom: none; }
+  .rep-email {
+    font-size: 11px;
+    color: var(--text);
+    flex: 0 0 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rep-bars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .rep-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .rep-bar-inner {
+    height: 5px;
+    border-radius: 3px;
+    min-width: 2px;
+  }
+  .rep-total {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    flex: 0 0 30px;
+    text-align: right;
+  }
+
+  /* GEO TABLE */
+  .geo-list { padding: 4px 0; }
+  .geo-item {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(30,37,53,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .geo-item:last-child { border-bottom: none; }
+  .geo-name { font-size: 12px; color: var(--text); }
+  .geo-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .geo-bar-track {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .geo-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+  /* BOOK/CASINO */
+  .book-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .book-half {
+    padding: 10px 0;
+  }
+  .book-half:first-child { border-right: 1px solid var(--border); }
+  .book-half-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'Space Mono', monospace;
+    padding: 4px 14px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .book-item {
+    padding: 7px 14px;
+    border-bottom: 1px solid rgba(30,37,53,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .book-item:last-child { border-bottom: none; }
+  .book-name { font-size: 11px; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .book-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* EMPTY STATE */
+  .empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+  }
+
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .section.full { grid-column: 1; }
+    .book-grid { grid-template-columns: 1fr; }
+    .book-half:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  select option { background: #161b26; color: var(--text); }
+
+  /* Scrollable section content */
+  .scroll-body { overflow-y: auto; max-height: 380px; }
+
+  /* Clickable status rows */
+  .status-row-clickable { cursor: pointer; }
+  .status-row-clickable:hover td { background: var(--surface2); }
+  .status-row-clickable td:first-child { user-select: none; }
+  .status-row-clickable .status-badge { transition: opacity 0.1s; }
+  .status-row-clickable:hover .status-badge { opacity: 0.85; }
+
+  /* Detail table pagination */
+  .pagination-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-top: 1px solid var(--border);
+    background: var(--surface2); font-family: 'Space Mono', monospace; font-size: 11px;
+  }
+  .pag-btn {
+    background: var(--pill-bg); border: 1px solid var(--border);
+    color: var(--text); padding: 4px 10px; border-radius: 5px;
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .pag-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .pag-btn:disabled { opacity: 0.3; cursor: default; }
+  .pag-input {
+    width: 46px; background: var(--pill-bg); border: 1px solid var(--border);
+    color: var(--accent); padding: 4px 6px; border-radius: 5px;
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    text-align: center; outline: none;
+  }
+  .pag-input:focus { border-color: var(--accent); }
+  .pag-info { color: var(--muted); }
+
+  /* Books stats columns */
+  .book-stat {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    text-align: right; flex-shrink: 0; min-width: 38px;
+  }
+  .book-stat.completed { color: var(--accent); }
+  .book-stat.revenue { color: var(--gold); }
+  .book-stat.signups { color: var(--muted); }
+  .book-stat-headers {
+    display: flex; padding: 5px 14px; gap: 8px;
+    font-size: 9px; color: var(--muted); font-family: 'Space Mono', monospace;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .s-completed-verified { background: rgba(0,229,160,0.12); color: var(--accent); }
+
+  /* ── Toggle buttons (All / Sportsbooks / Casinos) ── */
+  .toggle-group { display:flex; gap:4px; }
+  .tog-btn {
+    background: var(--pill-bg); border: 1px solid var(--border);
+    color: var(--muted); padding: 4px 10px; border-radius: 5px;
+    font-size: 10px; font-family: 'Space Mono', monospace;
+    cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s;
+  }
+  .tog-btn:hover  { border-color: var(--accent); color: var(--accent); }
+  .tog-btn.active { background: rgba(0,229,160,0.12); border-color: var(--accent); color: var(--accent); }
+
+  /* ── Sortable table headers ── */
+  .sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  .sortable:hover { color: var(--text); }
+  .sortable::after { content: ' ↕'; opacity: 0.3; font-size: 9px; }
+  .sortable.sort-asc::after  { content: ' ↑'; opacity: 1; color: var(--accent); }
+  .sortable.sort-desc::after { content: ' ↓'; opacity: 1; color: var(--accent); }
+  .th-num { text-align: right; }
+  .td-num { text-align: right; font-family: 'Space Mono', monospace; font-size: 11px; }
+
+  /* ── Rep performance table ── */
+  .rep-conv-bar {
+    display: inline-block; height: 4px; border-radius: 2px;
+    background: var(--accent); vertical-align: middle; margin-right: 6px;
+  }
+  .rep-perf-row { cursor: pointer; }
+  .rep-perf-row:hover td { background: var(--surface2); }
+  .rep-perf-row.active td { background: rgba(0,112,243,0.08); }
+
+  /* ── Conversion funnel ── */
+  .funnel-step {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 0; border-bottom: 1px solid rgba(30,37,53,0.5);
+  }
+  .funnel-step:last-child { border-bottom: none; }
+  .funnel-label {
+    flex: 0 0 180px; font-size: 12px; color: var(--text); white-space: nowrap;
+  }
+  .funnel-bar-track {
+    flex: 1; height: 16px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .funnel-bar-fill {
+    height: 100%; border-radius: 3px; transition: width 0.4s;
+    display: flex; align-items: center; padding-left: 6px;
+    font-size: 10px; font-family: 'Space Mono', monospace; color: #000; white-space: nowrap;
+  }
+  .funnel-count {
+    flex: 0 0 50px; text-align: right;
+    font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: var(--text);
+  }
+  .funnel-pct {
+    flex: 0 0 50px; text-align: right;
+    font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace;
+  }
+  .funnel-drop {
+    flex: 0 0 70px; text-align: right;
+    font-size: 10px; color: var(--danger); font-family: 'Space Mono', monospace;
+  }
+
+  /* ── Platform table drill-down rows ── */
+  .platform-row { cursor: pointer; }
+  .platform-row:hover td { background: var(--surface2); }
+  .platform-row.expanded td { background: rgba(167,139,250,0.06); }
+  .platform-drill-row td {
+    background: var(--surface2) !important;
+    font-size: 11px; padding: 6px 14px;
+  }
+  .platform-drill-row td:first-child { padding-left: 28px; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.72); z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; width: 100%; max-width: 960px;
+    max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+  .modal-header {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; flex-shrink: 0;
+  }
+  .modal-title {
+    font-family: 'Space Mono', monospace; font-size: 13px;
+    font-weight: 700; color: var(--text);
+  }
+  .modal-subtitle {
+    font-size: 11px; color: var(--muted); margin-top: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+  .modal-close {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-size: 13px; cursor: pointer; padding: 3px 9px; border-radius: 5px;
+    transition: all 0.15s; flex-shrink: 0; font-family: 'Space Mono', monospace;
+  }
+  .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+  .modal-body { overflow-y: auto; flex: 1; }
+  .modal-footer { border-top: 1px solid var(--border); flex-shrink: 0; }
+
+  /* ── Multi-select dropdowns ── */
+  .ms-wrap { position: relative; }
+  .ms-trigger {
+    width: 100%; background: var(--pill-bg); border: 1px solid var(--border);
+    color: var(--text); padding: 7px 10px; border-radius: 6px;
+    font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    text-align: left; transition: border-color 0.15s; outline: none;
+  }
+  .ms-trigger:hover { border-color: var(--accent); }
+  .ms-trigger.has-sel { border-color: var(--accent); }
+  .ms-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .ms-chevron { flex-shrink: 0; font-size: 9px; color: var(--muted); margin-left: 6px;
+    transition: transform 0.15s; display: inline-block; }
+  .ms-trigger.open .ms-chevron { transform: rotate(180deg); }
+  .ms-badge {
+    flex-shrink: 0; background: var(--accent); color: #000;
+    font-size: 9px; font-weight: 700; font-family: 'Space Mono', monospace;
+    padding: 1px 5px; border-radius: 10px; margin-left: 6px;
+  }
+  .ms-panel {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 300;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 7px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.55); min-width: 170px;
+  }
+  .ms-search {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; font-size: 11px; font-family: 'DM Sans', sans-serif;
+    outline: none; border-radius: 7px 7px 0 0;
+  }
+  .ms-search::placeholder { color: var(--muted); }
+  .ms-list { max-height: 180px; overflow-y: auto; padding: 4px 0; }
+  .ms-item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+    cursor: pointer; font-size: 12px; transition: background 0.1s;
+  }
+  .ms-item:hover { background: var(--pill-bg); }
+  .ms-item input[type="checkbox"] { accent-color: var(--accent); width: 13px; height: 13px; cursor: pointer; flex-shrink: 0; }
+  .ms-item-label { cursor: pointer; flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ms-empty { padding: 12px 10px; font-size: 11px; color: var(--muted); text-align: center; }
+  .ms-footer {
+    display: flex; gap: 6px; padding: 6px 10px;
+    border-top: 1px solid var(--border);
+  }
+  .ms-act {
+    flex: 1; background: var(--pill-bg); border: 1px solid var(--border);
+    color: var(--muted); padding: 4px 8px; border-radius: 4px; font-size: 10px;
+    font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.15s;
+  }
+  .ms-act:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Rep Scorecards ── */
+  .rep-scorecard {
+    background: var(--pill-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 140px;
+  }
+  .rep-scorecard-label {
+    font-size: 9px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600;
+  }
+  .rep-scorecard-value {
+    font-size: 18px; font-weight: 700; color: var(--text);
+    font-family: 'Space Mono', monospace;
+  }
+  .rep-scorecard-change {
+    font-size: 10px; margin-top: 4px; font-family: 'Space Mono', monospace;
+  }
+  .rep-scorecard-change.positive { color: var(--success); }
+  .rep-scorecard-change.negative { color: var(--danger); }
+  .rep-scorecard-change.neutral { color: var(--muted); }
+</style>
+</head>
+<body>
+
+
+<!-- Drill-down Modal -->
+<div id="drillModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕ Close</button>
+    </div>
+    <div id="repScorecards" style="display:none;padding:0 20px 16px;display:flex;gap:12px;flex-wrap:wrap;"></div>
+    <div class="modal-body">
+      <table class="status-table" style="width:100%">
+        <thead id="modalHead"></thead>
+        <tbody id="modalBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <div class="pagination-bar" id="modalPagination"></div>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <div class="logo">Sharp<span>Stakes</span> <span style="color:var(--muted);font-weight:400;">/ Sales Dashboard</span></div>
+  <div style="display:flex;align-items:center;gap:20px;">
+    <span id="record-count">— records</span>
+    <span class="header-meta">Last export: Mar 25, 2026</span>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-wrap">
+  <div class="filters-grid">
+
+    <div class="filter-group" id="dateTypeGroup">
+      <label>Date Column</label>
+      <select id="dateType">
+        <option value="">— No date filter —</option>
+        <option value="Created Date">Created Date</option>
+        <option value="deposit_approved_date">Deposit Approved Date</option>
+        <option value="welcome_approved_date">Welcome Approved Date</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>From Date</label>
+      <input type="date" id="dateFrom">
+    </div>
+
+    <div class="filter-group">
+      <label>To Date</label>
+      <input type="date" id="dateTo">
+    </div>
+
+    <div class="filter-group">
+      <label>Approved By (Rep)</label>
+      <div class="ms-wrap" id="ms-rep">
+        <button class="ms-trigger" onclick="toggleMs('rep',event)">
+          <span class="ms-label" id="ms-label-rep">All Reps</span>
+          <span class="ms-chevron">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-panel-rep" style="display:none;">
+          <input class="ms-search" placeholder="Search reps…" oninput="searchMs('rep',this.value)">
+          <div class="ms-list" id="ms-list-rep"></div>
+          <div class="ms-footer">
+            <button class="ms-act" onclick="clearMs('rep')">Clear</button>
+            <button class="ms-act" onclick="selectAllMs('rep')">All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Country</label>
+      <div class="ms-wrap" id="ms-country">
+        <button class="ms-trigger" onclick="toggleMs('country',event)">
+          <span class="ms-label" id="ms-label-country">All Countries</span>
+          <span class="ms-chevron">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-panel-country" style="display:none;">
+          <input class="ms-search" placeholder="Search…" oninput="searchMs('country',this.value)">
+          <div class="ms-list" id="ms-list-country"></div>
+          <div class="ms-footer">
+            <button class="ms-act" onclick="clearMs('country')">Clear</button>
+            <button class="ms-act" onclick="selectAllMs('country')">All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Click Location</label>
+      <div class="ms-wrap" id="ms-location">
+        <button class="ms-trigger" onclick="toggleMs('location',event)">
+          <span class="ms-label" id="ms-label-location">All Locations</span>
+          <span class="ms-chevron">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-panel-location" style="display:none;">
+          <input class="ms-search" placeholder="Search locations…" oninput="searchMs('location',this.value)">
+          <div class="ms-list" id="ms-list-location"></div>
+          <div class="ms-footer">
+            <button class="ms-act" onclick="clearMs('location')">Clear</button>
+            <button class="ms-act" onclick="selectAllMs('location')">All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Sportsbook</label>
+      <div class="ms-wrap" id="ms-book">
+        <button class="ms-trigger" onclick="toggleMs('book',event)">
+          <span class="ms-label" id="ms-label-book">All Sportsbooks</span>
+          <span class="ms-chevron">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-panel-book" style="display:none;">
+          <input class="ms-search" placeholder="Search sportsbooks…" oninput="searchMs('book',this.value)">
+          <div class="ms-list" id="ms-list-book"></div>
+          <div class="ms-footer">
+            <button class="ms-act" onclick="clearMs('book')">Clear</button>
+            <button class="ms-act" onclick="selectAllMs('book')">All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Casino</label>
+      <div class="ms-wrap" id="ms-casino">
+        <button class="ms-trigger" onclick="toggleMs('casino',event)">
+          <span class="ms-label" id="ms-label-casino">All Casinos</span>
+          <span class="ms-chevron">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-panel-casino" style="display:none;">
+          <input class="ms-search" placeholder="Search casinos…" oninput="searchMs('casino',this.value)">
+          <div class="ms-list" id="ms-list-casino"></div>
+          <div class="ms-footer">
+            <button class="ms-act" onclick="clearMs('casino')">Clear</button>
+            <button class="ms-act" onclick="selectAllMs('casino')">All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Partnership</label>
+      <div class="ms-wrap" id="ms-partnership">
+        <button class="ms-trigger" onclick="toggleMs('partnership',event)">
+          <span class="ms-label" id="ms-label-partnership">All Partnerships</span>
+          <span class="ms-chevron">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-panel-partnership" style="display:none;">
+          <input class="ms-search" placeholder="Search partnerships…" oninput="searchMs('partnership',this.value)">
+          <div class="ms-list" id="ms-list-partnership"></div>
+          <div class="ms-footer">
+            <button class="ms-act" onclick="clearMs('partnership')">Clear</button>
+            <button class="ms-act" onclick="selectAllMs('partnership')">All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>&nbsp;</label>
+      <button class="btn-reset" onclick="resetFilters()">↺ Reset</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpis" id="kpiRow"></div>
+
+<!-- MAIN GRID -->
+<div class="main">
+
+  <!-- Status Breakdown -->
+  <div class="section full">
+    <div class="section-header" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:8px;"><span class="dot"></span> Status Breakdown — Users Per Status</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;">VIEW BY STATUS:</span>
+        <select id="statusDetailFilter" style="background:var(--pill-bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;">
+          <option value="">— Summary —</option>
+        </select>
+      </div>
+    </div>
+    <!-- Summary view -->
+    <div id="statusSummaryView" class="scroll-body">
+      <table class="status-table" id="statusTable">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Count</th>
+            <th style="width:160px;">Share</th>
+          </tr>
+        </thead>
+        <tbody id="statusBody"></tbody>
+      </table>
+    </div>
+    <!-- Detail view (users for a specific status) -->
+    <div id="statusDetailView" style="display:none;">
+      <div style="padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:10px;">
+        <button class="pag-btn" onclick="backToSummary()">← All Statuses</button>
+        <span id="detailViewLabel" style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;"></span>
+      </div>
+      <div style="overflow-y:auto;max-height:340px;">
+        <table class="status-table" id="statusDetailTable">
+          <thead>
+            <tr>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Rep</th>
+              <th style="text-align:right">Deposit $</th>
+              <th>Book / Casino</th>
+              <th>Partnership</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="statusDetailBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-bar" id="detailPagination"></div>
+    </div>
+  </div>
+
+  <!-- Rep Performance (full-width, comprehensive) -->
+  <div class="section full">
+    <div class="section-header" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span class="dot" style="background:var(--accent2)"></span> Rep Performance
+      </span>
+      <span style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;">Click a row to see that rep's records</span>
+    </div>
+    <div id="repTableWrap">
+      <table class="status-table sort-table" id="repPerfTable">
+        <thead>
+          <tr>
+            <th data-col="rep" class="sortable">Rep</th>
+            <th data-col="welcomes" class="sortable th-num">Welcomes</th>
+            <th data-col="deposits" class="sortable th-num">Deposits</th>
+            <th data-col="total" class="sortable th-num">Deposit Total</th>
+            <th data-col="avg" class="sortable th-num">Avg Deposit</th>
+            <th data-col="conv" class="sortable th-num">Conv %</th>
+          </tr>
+        </thead>
+        <tbody id="repBody"></tbody>
+      </table>
+      <div class="pagination-bar" id="repTablePagination" style="display:none"></div>
+    </div>
+
+  </div>
+
+  <!-- Conversion Funnel + (future slot) -->
+  <div class="section full">
+    <div class="section-header"><span class="dot" style="background:var(--gold)"></span> Conversion Funnel</div>
+    <div id="funnelBody" style="padding:12px 16px;"></div>
+  </div>
+
+  <!-- Platforms -->
+  <div class="section full">
+    <div class="section-header" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span class="dot" style="background:#a78bfa"></span> Platform Performance
+      </span>
+      <div class="toggle-group" id="platformToggle">
+        <button class="tog-btn active" data-filter="all"   onclick="setPlatformFilter('all')">All</button>
+        <button class="tog-btn"        data-filter="sport" onclick="setPlatformFilter('sport')">Sportsbooks</button>
+        <button class="tog-btn"        data-filter="casino"onclick="setPlatformFilter('casino')">Casinos</button>
+      </div>
+    </div>
+    <div style="overflow-y:auto;max-height:420px;">
+      <table class="status-table sort-table" id="platformTable">
+        <thead>
+          <tr>
+            <th data-col="name"     class="sortable">Platform</th>
+            <th data-col="type"     class="sortable">Type</th>
+            <th data-col="signups"  class="sortable th-num">Signups</th>
+            <th data-col="completed"class="sortable th-num">Completed</th>
+            <th data-col="deposit"  class="sortable th-num">Deposit Total</th>
+            <th data-col="conv"     class="sortable th-num">Conv %</th>
+          </tr>
+        </thead>
+        <tbody id="platformBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination-bar" id="platformTablePagination" style="display:none"></div>
+  </div>
+
+</div>
+
+<script>
+// ---- DATA PLACEHOLDER ----
+const RAW_DATA = <?!= data ?>;
+
+// ---- HELPERS ----
+function parseDate(str) {
+  if (!str) return null;
+  const d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+function toYMD(d) {
+  if (!d) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function normalizeStatus(s) {
+  if (!s) return s;
+  if (s === 'Completed' || s === 'Verified') return 'Completed / Verified';
+  return s;
+}
+
+// ── REP ALIAS MAP ─────────────────────────────────────────────────────────────
+// To merge more names: add 'Sheet Name': 'Canonical Name' entries below.
+const REP_ALIASES = {
+  'Mansukh Grewal':  'Manny',
+  'Carter  Watson': 'Carter'
+};
+
+function normalizeRep(name) {
+  if (!name || name === 'Not Found') return null;
+  const t = name.trim();
+  return REP_ALIASES[t] || t;
+}
+
+function getRepFromRow(r) {
+  return normalizeRep(r['Approved Deposit']) || normalizeRep(r['Approved Welcome']) || null;
+}
+
+function matchesApprovedBy(record, repSet) {
+  if (!repSet || repSet.size === 0) return true;
+  const repName = getRepFromRow(record);
+  return repName !== null && repSet.has(repName);
+}
+
+function getStatusClass(s) {
+  if (!s) return '';
+  const sl = s.toLowerCase();
+  if (sl.includes('completed') || sl.includes('verified')) return 's-completed';
+  if (sl.includes('signup')) return 's-signup';
+  if (sl.includes('reviewing')) return 's-reviewing';
+  if (sl.includes('approved')) return 's-approved';
+  if (sl.includes('rejected')) return 's-rejected';
+  return '';
+}
+function getBarClass(s) {
+  if (!s) return '';
+  const sl = s.toLowerCase();
+  if (sl.includes('completed') || sl.includes('verified')) return '';
+  if (sl.includes('signup')) return 's-signup-bar';
+  if (sl.includes('reviewing')) return 's-reviewing-bar';
+  if (sl.includes('approved')) return 's-approved-bar';
+  if (sl.includes('rejected')) return 's-rejected-bar';
+  return '';
+}
+
+// ── MULTI-SELECT STATE ────────────────────────────────────────────────────────
+const MS_DEFAULTS = {
+  rep:         'All Reps',
+  country:     'All Countries',
+  location:    'All Locations',
+  book:        'All Sportsbooks',
+  casino:      'All Casinos',
+  partnership: 'All Partnerships'
+};
+const MS = {
+  rep:         { selected: new Set(), allOptions: [] },
+  country:     { selected: new Set(), allOptions: [] },
+  location:    { selected: new Set(), allOptions: [] },
+  book:        { selected: new Set(), allOptions: [] },
+  casino:      { selected: new Set(), allOptions: [] },
+  partnership: { selected: new Set(), allOptions: [] }
+};
+const COUNTRY_LABELS = { CA: '🇨🇦 Canada (CA)', US: '🇺🇸 United States (US)' };
+
+function toggleMs(key, e) {
+  if (e) e.stopPropagation();
+  const panel   = document.getElementById('ms-panel-' + key);
+  const trigger = document.querySelector('#ms-' + key + ' .ms-trigger');
+  const isOpen  = panel.style.display !== 'none';
+  closeAllMs();
+  if (!isOpen) {
+    panel.style.display = '';
+    trigger.classList.add('open');
+    const si = panel.querySelector('.ms-search');
+    if (si) { si.value = ''; renderMsOptions(key, ''); si.focus(); }
+  }
+}
+function closeAllMs() {
+  Object.keys(MS).forEach(k => {
+    const p = document.getElementById('ms-panel-' + k);
+    const t = document.querySelector('#ms-' + k + ' .ms-trigger');
+    if (p) p.style.display = 'none';
+    if (t) t.classList.remove('open');
+  });
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ms-wrap')) closeAllMs();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeAllMs();
+});
+
+function renderMsOptions(key, search) {
+  const list = document.getElementById('ms-list-' + key);
+  const opts = MS[key].allOptions.filter(o =>
+    !search || o.toLowerCase().includes(search.toLowerCase())
+  );
+  if (!opts.length) {
+    list.innerHTML = '<div class="ms-empty">No options</div>';
+    return;
+  }
+  list.innerHTML = opts.map(o => {
+    const label = key === 'country' ? (COUNTRY_LABELS[o] || o) : o;
+    const chk   = MS[key].selected.has(o) ? 'checked' : '';
+    const safeO = o.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    return `<label class="ms-item">
+      <input type="checkbox" ${chk} onchange="toggleMsItem('${key}','${safeO}',this.checked)">
+      <span class="ms-item-label" title="${label}">${label}</span>
+    </label>`;
+  }).join('');
+}
+
+function toggleMsItem(key, val, checked) {
+  if (checked) MS[key].selected.add(val);
+  else         MS[key].selected.delete(val);
+  updateMsLabel(key);
+  render();
+}
+
+function updateMsLabel(key) {
+  const sel     = MS[key].selected;
+  const trigger = document.querySelector('#ms-' + key + ' .ms-trigger');
+  const lbl     = document.getElementById('ms-label-' + key);
+  // Remove old badge
+  const oldBadge = trigger.querySelector('.ms-badge');
+  if (oldBadge) oldBadge.remove();
+  if (sel.size === 0) {
+    lbl.textContent = MS_DEFAULTS[key];
+    trigger.classList.remove('has-sel');
+  } else {
+    const displayArr = [...sel].map(v => key === 'country' ? (COUNTRY_LABELS[v] || v) : v);
+    if (sel.size <= 2) lbl.textContent = displayArr.join(', ');
+    else               lbl.textContent = MS_DEFAULTS[key];
+    const badge = document.createElement('span');
+    badge.className = 'ms-badge';
+    badge.textContent = sel.size;
+    trigger.appendChild(badge);
+    trigger.classList.add('has-sel');
+  }
+}
+
+function searchMs(key, val) { renderMsOptions(key, val); }
+
+function clearMs(key) {
+  MS[key].selected.clear();
+  renderMsOptions(key, '');
+  updateMsLabel(key);
+  render();
+}
+
+function selectAllMs(key) {
+  MS[key].allOptions.forEach(o => MS[key].selected.add(o));
+  renderMsOptions(key, '');
+  updateMsLabel(key);
+  render();
+}
+
+// ---- POPULATE DROPDOWNS FROM DATA ----
+function populateDropdowns() {
+  const sets = { rep: new Set(), country: new Set(), location: new Set(), book: new Set(), casino: new Set(), partnership: new Set() };
+  RAW_DATA.forEach(r => {
+    ['Approved Deposit', 'Approved Welcome'].forEach(f => {
+      const v = normalizeRep(r[f]); if (v) sets.rep.add(v);
+    });
+    if (r['Click_country'])    sets.country.add(r['Click_country']);
+    if (r['Click_location'])   sets.location.add(r['Click_location']);
+    if (r['search book'])      sets.book.add(r['search book'].trim());
+    if (r['search casino'])    sets.casino.add(r['search casino'].trim());
+    if (r['Partnership Name']) sets.partnership.add(r['Partnership Name'].trim());
+  });
+  Object.keys(sets).forEach(k => {
+    MS[k].allOptions = [...sets[k]].sort();
+  });
+}
+
+// ---- FILTER ----
+function getFiltered() {
+  const dateType = document.getElementById('dateType').value;
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo   = document.getElementById('dateTo').value;
+
+  return RAW_DATA.filter(r => {
+    if (dateType && (dateFrom || dateTo)) {
+      const d = parseDate(r[dateType]);
+      if (!d) return false;
+      const ymd = toYMD(d);
+      if (dateFrom && ymd < dateFrom) return false;
+      if (dateTo   && ymd > dateTo)   return false;
+    }
+    if (!matchesApprovedBy(r, MS.rep.selected))                                           return false;
+    if (MS.country.selected.size  > 0 && !MS.country.selected.has(r['Click_country']))   return false;
+    if (MS.location.selected.size > 0 && !MS.location.selected.has(r['Click_location'])) return false;
+    if (MS.book.selected.size     > 0 && !MS.book.selected.has(r['search book']))        return false;
+    if (MS.casino.selected.size       > 0 && !MS.casino.selected.has(r['search casino']))         return false;
+    if (MS.partnership.selected.size  > 0 && !MS.partnership.selected.has(r['Partnership Name'])) return false;
+    return true;
+  });
+}
+
+// ---- RENDER ----
+function render() {
+  const data = getFiltered();
+  document.getElementById('record-count').textContent = `${data.length.toLocaleString()} records`;
+  renderKPIs(data);
+  renderStatus(data);
+  renderReps(data);
+  renderFunnel(data);
+  renderBooks(data);
+}
+
+function renderKPIs(data) {
+  const total     = data.length;
+  const completed = data.filter(r => normalizeStatus(r['Status']) === 'Completed / Verified').length;
+  const repSet    = new Set();
+  data.forEach(r => { const rn = getRepFromRow(r); if (rn) repSet.add(rn); });
+  const userSet   = new Set(data.map(r => r['Email']).filter(Boolean));
+  const bookSet   = new Set([...data.map(r=>r['search book']).filter(Boolean),
+                              ...data.map(r=>r['search casino']).filter(Boolean)]);
+  const revenue   = data.reduce((sum, r) => {
+    const n = parseFloat(r['deposit_amount']);
+    return sum + (isNaN(n) ? 0 : n);
+  }, 0);
+
+  const kpis = [
+    { label: 'Total Records',     value: total.toLocaleString(),  sub: 'filtered entries' },
+    { label: 'Completed/Verified',value: completed.toLocaleString(), sub: `${total ? Math.round(completed/total*100) : 0}% rate` },
+    { label: 'Unique Users',      value: userSet.size.toLocaleString(), sub: 'distinct emails' },
+    { label: 'Active Reps',       value: repSet.size.toLocaleString(),  sub: 'approvers' },
+    { label: 'Total Deposits',    value: revenue > 0 ? `$${revenue.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0})}` : '—', sub: 'sum of approved deposits' },
+    { label: 'Platforms',         value: bookSet.size.toLocaleString(), sub: 'books & casinos' },
+  ];
+
+  document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+}
+
+// ---- NAME / PHONE HELPERS ----
+function normalizePhone(ph) {
+  if (!ph) return '';
+  const digits = ph.replace(/\D/g, '');
+  if (digits.length === 11 && digits[0] === '1') {
+    return `+1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `+1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+  }
+  return ph;
+}
+
+function splitName(fullName) {
+  if (!fullName) return { first: '', last: '' };
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return { first: parts[0], last: '' };
+  return { first: parts[0], last: parts.slice(1).join(' ') };
+}
+
+// ---- STATUS RENDERING ----
+let _lastFilteredData = [];
+let _detailRows       = [];
+let _detailPage       = 0;
+const PAGE_SIZE       = 25;
+
+function renderStatus(data) {
+  _lastFilteredData = data;
+
+  // Populate selector with merged statuses
+  const selector   = document.getElementById('statusDetailFilter');
+  const currentVal = selector.value;
+  const rawStatuses = [...new Set(data.map(r => normalizeStatus(r['Status'])).filter(Boolean))].sort();
+  selector.innerHTML = '<option value="">— Summary —</option>' +
+    rawStatuses.map(s => `<option value="${s}"${s===currentVal?' selected':''}>${s}</option>`).join('');
+
+  if (selector.value) {
+    showStatusDetail(selector.value);
+  } else {
+    renderStatusSummary(data);
+  }
+}
+
+function renderStatusSummary(data) {
+  document.getElementById('statusSummaryView').style.display = '';
+  document.getElementById('statusDetailView').style.display  = 'none';
+
+  const total     = data.length || 1;
+  const statusMap = {};
+  data.forEach(r => {
+    const s = normalizeStatus(r['Status']) || 'Unknown';
+    if (!statusMap[s]) statusMap[s] = 0;
+    statusMap[s]++;
+  });
+
+  const sorted   = Object.entries(statusMap).sort((a,b) => b[1]-a[1]);
+  if (!sorted.length) {
+    document.getElementById('statusBody').innerHTML = '<tr><td colspan="3" class="empty">No data</td></tr>';
+    return;
+  }
+  const maxCount = sorted[0][1];
+  document.getElementById('statusBody').innerHTML = sorted.map(([status, count]) => {
+    const pct  = Math.round(count/total*100);
+    const barW = Math.round(count/maxCount*100);
+    const sc   = getStatusClass(status);
+    const bc   = getBarClass(status);
+    return `<tr class="status-row-clickable" onclick="selectStatus('${status.replace(/'/g,"\'")}')">
+      <td><span class="status-badge ${sc}">${status}</span></td>
+      <td><span class="count-pill">${count}</span></td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar ${bc}" style="width:${barW}px;max-width:120px"></div>
+          <span class="bar-pct">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function selectStatus(statusVal) {
+  const selector = document.getElementById('statusDetailFilter');
+  selector.value = statusVal;
+  showStatusDetail(statusVal);
+}
+
+function backToSummary() {
+  document.getElementById('statusDetailFilter').value = '';
+  renderStatusSummary(_lastFilteredData);
+}
+
+function showStatusDetail(statusVal) {
+  _detailRows = _lastFilteredData.filter(r => normalizeStatus(r['Status']) === statusVal);
+  _detailPage = 0;
+  const lbl = document.getElementById('detailViewLabel');
+  if (lbl) lbl.textContent = `${statusVal}  ·  ${_detailRows.length} records`;
+  renderDetailPage();
+}
+
+function getRowDate(r) {
+  const s = normalizeStatus(r['Status']);
+  if (s === 'Completed / Verified')
+    return r['deposit_approved_date'] || r['Created Date'];
+  if (['Welcome Approved','Reviewing Deposit','Deposit Rejected'].includes(s))
+    return r['welcome_approved_date'] || r['Created Date'];
+  return r['Created Date'];
+}
+function fmtDate(v) {
+  if (!v) return '—';
+  const d = parseDate(v);
+  if (!d) return '—';
+  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+  return `${mo} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// ── Generic pagination renderer ───────────────────────────────────────────────
+function renderPagBar(containerId, page, totalPages, total, prevFn, nextFn, jumpFn) {
+  const showing = total === 0 ? '0'
+    : `${page*PAGE_SIZE+1}–${Math.min((page+1)*PAGE_SIZE, total)}`;
+  const uid = containerId.replace(/\W/g,'_');
+  document.getElementById(containerId).innerHTML = `
+    <button class="pag-btn" onclick="${prevFn}()" ${page===0?'disabled':''}>← Prev</button>
+    <span class="pag-info">Page</span>
+    <input class="pag-input" id="pji_${uid}" type="number" min="1" max="${totalPages}"
+      value="${page+1}"
+      onchange="${jumpFn}(this.value)"
+      onkeydown="if(event.key==='Enter')${jumpFn}(this.value)">
+    <span class="pag-info">of ${totalPages} &nbsp;·&nbsp; ${showing} of ${total}</span>
+    <button class="pag-btn" onclick="${nextFn}()" ${page>=totalPages-1?'disabled':''}>Next →</button>
+  `;
+}
+
+// ── Status detail ─────────────────────────────────────────────────────────────
+function renderDetailPage() {
+  document.getElementById('statusSummaryView').style.display = 'none';
+  document.getElementById('statusDetailView').style.display  = '';
+
+  const total      = _detailRows.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  _detailPage = Math.max(0, Math.min(_detailPage, totalPages-1));
+  const slice = _detailRows.slice(_detailPage * PAGE_SIZE, (_detailPage+1) * PAGE_SIZE);
+
+  if (!slice.length) {
+    document.getElementById('statusDetailBody').innerHTML =
+      '<tr><td colspan="9" class="empty">No records for this status</td></tr>';
+  } else {
+    document.getElementById('statusDetailBody').innerHTML = slice.map(r => {
+      const { first, last } = splitName(r['Name']);
+      const phone    = normalizePhone(r['Ph no']);
+      const email    = r['Email'] || '';
+      const rep      = getRepFromRow(r) || '—';
+      const amt      = r['deposit_amount']
+                       ? `$${parseFloat(r['deposit_amount']).toLocaleString()}` : '—';
+      const platform    = r['search book'] || r['search casino'] || '—';
+      const partnership = r['Partnership Name'] || '—';
+      const date        = fmtDate(getRowDate(r));
+      return `<tr>
+        <td style="font-size:12px;color:var(--text)">${first}</td>
+        <td style="font-size:12px;color:var(--text)">${last}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);white-space:nowrap">${phone}</td>
+        <td style="font-size:11px;color:var(--muted)">${email}</td>
+        <td style="font-size:11px;color:var(--text);font-weight:600">${rep}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--gold);text-align:right">${amt}</td>
+        <td style="font-size:11px;color:var(--text)">${platform}</td>
+        <td style="font-size:11px;color:var(--accent2)">${partnership}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap">${date}</td>
+      </tr>`;
+    }).join('');
+  }
+  renderPagBar('detailPagination', _detailPage, totalPages, total,
+    'detailPrev', 'detailNext', 'detailJump');
+}
+function detailPrev() { _detailPage--; renderDetailPage(); }
+function detailNext() { _detailPage++; renderDetailPage(); }
+function detailJump(v) { _detailPage = Math.max(0, parseInt(v,10)-1)||0; renderDetailPage(); }
+
+// ── Modal system ──────────────────────────────────────────────────────────────
+let _modalRows   = [];
+let _modalPage   = 0;
+let _modalRender = null; // function(rows) => {head, bodyRows}
+let _modalSortCol = null;
+let _modalSortDir = 1;
+
+function openModal(title, subtitle, rows, renderFn) {
+  _modalRows   = rows;
+  _modalPage   = 0;
+  _modalRender = renderFn;
+  _modalSortCol = null;
+  _modalSortDir = 1;
+  document.getElementById('modalTitle').textContent    = title;
+  document.getElementById('modalSubtitle').textContent = subtitle;
+  document.getElementById('drillModal').style.display  = 'flex';
+  renderModalPage();
+}
+function closeModal() {
+  document.getElementById('drillModal').style.display = 'none';
+  _modalRows = []; _modalRender = null;
+}
+function modalPrev() { _modalPage--; renderModalPage(); }
+function modalNext() { _modalPage++; renderModalPage(); }
+function modalJump(v) { _modalPage = Math.max(0, parseInt(v,10)-1)||0; renderModalPage(); }
+
+function renderModalPage() {
+  // Sort modal rows if sort column is set
+  if (_modalSortCol !== null) {
+    _modalRows.sort((a, b) => {
+      let va, vb;
+      switch(_modalSortCol) {
+        case 'name':
+          va = (a['Name'] || '').toLowerCase();
+          vb = (b['Name'] || '').toLowerCase();
+          break;
+        case 'status':
+          va = normalizeStatus(a['Status']) || '';
+          vb = normalizeStatus(b['Status']) || '';
+          break;
+        case 'phone':
+          va = normalizePhone(a['Ph no']);
+          vb = normalizePhone(b['Ph no']);
+          break;
+        case 'email':
+          va = (a['Email'] || '').toLowerCase();
+          vb = (b['Email'] || '').toLowerCase();
+          break;
+        case 'platform':
+          va = (a['search book'] || a['search casino'] || '').toLowerCase();
+          vb = (b['search book'] || b['search casino'] || '').toLowerCase();
+          break;
+        case 'deposit':
+          va = parseFloat(a['deposit_amount']) || 0;
+          vb = parseFloat(b['deposit_amount']) || 0;
+          break;
+        case 'date':
+          va = getRowDate(a) ? new Date(getRowDate(a)).getTime() : 0;
+          vb = getRowDate(b) ? new Date(getRowDate(b)).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+      if (typeof va === 'string') {
+        return _modalSortDir * va.localeCompare(vb);
+      }
+      return _modalSortDir * (va - vb);
+    });
+  }
+  
+  const total      = _modalRows.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  _modalPage = Math.max(0, Math.min(_modalPage, totalPages-1));
+  const slice = _modalRows.slice(_modalPage * PAGE_SIZE, (_modalPage+1) * PAGE_SIZE);
+
+  const { head, body } = _modalRender(slice);
+  document.getElementById('modalHead').innerHTML = head;
+  document.getElementById('modalBody').innerHTML = body;
+  renderPagBar('modalPagination', _modalPage, totalPages, total,
+    'modalPrev', 'modalNext', 'modalJump');
+  
+  // Attach sort listeners to modal headers
+  document.querySelectorAll('#modalHead th[data-sort]').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const col = th.dataset.sort;
+      if (_modalSortCol === col) {
+        _modalSortDir *= -1;
+      } else {
+        _modalSortCol = col;
+        _modalSortDir = 1;
+      }
+      _modalPage = 0;
+      renderModalPage();
+    };
+  });
+}
+
+// ── Rep Performance ───────────────────────────────────────────────────────────
+let _repSortCol = 'total';
+let _repSortDir = -1;
+let _repData    = [];
+let _repPage    = 0;
+
+function renderReps(data) { _repData = data; _repPage = 0; buildRepTable(data); }
+
+function buildRepTable(data) {
+  const repMap = {};
+  data.forEach(r => {
+    [
+      { name: normalizeRep(r['Approved Deposit']), type: 'deposit'  },
+      { name: normalizeRep(r['Approved Welcome']), type: 'welcome'  }
+    ].forEach(({ name, type }) => {
+      if (!name || name === 'Not Found') return;
+      const rep = name.trim();
+      if (!repMap[rep]) repMap[rep] = { welcomes:0, deposits:0, total:0, rows:[] };
+      if (type === 'deposit') {
+        repMap[rep].deposits++;
+        const n = parseFloat(r['deposit_amount']);
+        if (!isNaN(n)) repMap[rep].total += n;
+      } else {
+        repMap[rep].welcomes++;
+      }
+      if (!repMap[rep].rows.includes(r)) repMap[rep].rows.push(r);
+    });
+  });
+
+  let entries = Object.entries(repMap).map(([rep, d]) => ({
+    rep, welcomes: d.welcomes, deposits: d.deposits, total: d.total,
+    avg:  d.deposits ? d.total / d.deposits : 0,
+    conv: d.welcomes ? Math.round(d.deposits / d.welcomes * 100) : 0,
+    rows: d.rows
+  }));
+
+  entries.sort((a, b) => {
+    const va = a[_repSortCol] ?? a.rep;
+    const vb = b[_repSortCol] ?? b.rep;
+    return typeof va === 'string'
+      ? _repSortDir * va.localeCompare(vb)
+      : _repSortDir * (va - vb);
+  });
+
+  // Update sort indicators
+  document.querySelectorAll('#repPerfTable th.sortable').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.col === _repSortCol)
+      th.classList.add(_repSortDir===1?'sort-asc':'sort-desc');
+  });
+
+  // Paginate
+  const total      = entries.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  _repPage = Math.max(0, Math.min(_repPage, totalPages-1));
+  const slice = entries.slice(_repPage * PAGE_SIZE, (_repPage+1) * PAGE_SIZE);
+
+  if (!slice.length) {
+    document.getElementById('repBody').innerHTML =
+      '<tr><td colspan="6" class="empty">No rep data</td></tr>';
+  } else {
+    document.getElementById('repBody').innerHTML = slice.map(e => {
+      const fmtTotal = e.total > 0
+        ? `$${e.total.toLocaleString(undefined,{maximumFractionDigits:0})}` : '—';
+      const fmtAvg = e.avg > 0
+        ? `$${e.avg.toLocaleString(undefined,{maximumFractionDigits:0})}` : '—';
+      const safeRep = e.rep.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<tr class="rep-perf-row" onclick="openRepDrill('${safeRep}')">
+        <td style="font-weight:600;color:var(--text)">${e.rep}</td>
+        <td class="td-num">${e.welcomes}</td>
+        <td class="td-num">${e.deposits}</td>
+        <td class="td-num" style="color:var(--gold)">${fmtTotal}</td>
+        <td class="td-num" style="color:var(--muted)">${fmtAvg}</td>
+        <td class="td-num">
+          <span class="rep-conv-bar" style="width:${Math.min(e.conv,100)*0.6}px"></span>${e.conv}%
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Attach sort listeners (replaces on each rebuild — idempotent)
+  document.querySelectorAll('#repPerfTable th.sortable').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.col;
+      _repSortCol === col ? (_repSortDir *= -1) : (_repSortCol=col, _repSortDir=-1);
+      _repPage = 0;
+      buildRepTable(_repData);
+    };
+  });
+
+  // Rep table pagination bar (only show if >1 page)
+  const pagEl = document.getElementById('repTablePagination');
+  if (pagEl) {
+    if (totalPages > 1) {
+      pagEl.style.display = '';
+      renderPagBar('repTablePagination', _repPage, totalPages, total,
+        'repTablePrev','repTableNext','repTableJump');
+    } else {
+      pagEl.style.display = 'none';
+    }
+  }
+}
+
+function repTablePrev() { _repPage--; buildRepTable(_repData); }
+function repTableNext() { _repPage++; buildRepTable(_repData); }
+function repTableJump(v) { _repPage=Math.max(0,parseInt(v,10)-1)||0; buildRepTable(_repData); }
+
+// Store last rep entries for modal lookup
+let _repEntries = {};
+function openRepDrill(repName) {
+  const repMap = {};
+  _repData.forEach(r => {
+    [r['Approved Deposit'], r['Approved Welcome']].forEach(f => {
+      if (f && f.trim() === repName && !repMap[r]) repMap[r] = true;
+    });
+  });
+  const rows = _repData.filter(r =>
+    [r['Approved Deposit'], r['Approved Welcome']].some(f => f && f.trim() === repName)
+  );
+  // Summary stats
+  const deps  = rows.filter(r => r['Approved Deposit'] && r['Approved Deposit'].trim()===repName);
+  const total = deps.reduce((s,r)=>s+(parseFloat(r['deposit_amount'])||0), 0);
+  const subtitle = `${rows.length} records · ${deps.length} deposits · $${total.toLocaleString(undefined,{maximumFractionDigits:0})} total`;
+
+  openModal(repName, subtitle, rows, renderRepDrillRows);
+  
+  // Render scorecards
+  const scorecards = calculateRepScorecards(rows, repName);
+  const scorecardsEl = document.getElementById('repScorecards');
+  scorecardsEl.style.display = 'flex';
+  scorecardsEl.innerHTML = `
+    <div class="rep-scorecard">
+      <div class="rep-scorecard-label">Current Period Active</div>
+      <div class="rep-scorecard-value">${scorecards.currentActive}</div>
+      <div class="rep-scorecard-change ${scorecards.activeChangeClass}">
+        ${scorecards.activeChange}
+      </div>
+    </div>
+    <div class="rep-scorecard">
+      <div class="rep-scorecard-label">Previous Period Active</div>
+      <div class="rep-scorecard-value">${scorecards.previousActive}</div>
+    </div>
+    <div class="rep-scorecard">
+      <div class="rep-scorecard-label">Unique Completed (Current)</div>
+      <div class="rep-scorecard-value">${scorecards.currentUnique}</div>
+      <div class="rep-scorecard-change ${scorecards.uniqueChangeClass}">
+        ${scorecards.uniqueChange}
+      </div>
+    </div>
+    <div class="rep-scorecard">
+      <div class="rep-scorecard-label">Unique Completed (Previous)</div>
+      <div class="rep-scorecard-value">${scorecards.previousUnique}</div>
+    </div>
+  `;
+}
+
+function renderRepDrillRows(slice) {
+  const sortIcon = (col) => {
+    if (_modalSortCol !== col) return '';
+    return _modalSortDir === 1 ? ' ↑' : ' ↓';
+  };
+  
+  const head = `<tr>
+    <th data-sort="name">Name${sortIcon('name')}</th>
+    <th data-sort="status">Status${sortIcon('status')}</th>
+    <th data-sort="phone">Phone${sortIcon('phone')}</th>
+    <th data-sort="email">Email${sortIcon('email')}</th>
+    <th data-sort="platform">Platform${sortIcon('platform')}</th>
+    <th data-sort="deposit" style="text-align:right">Deposit $${sortIcon('deposit')}</th>
+    <th data-sort="date">Date${sortIcon('date')}</th>
+  </tr>`;
+  const body = slice.map(r => {
+    const { first, last } = splitName(r['Name']);
+    const status   = normalizeStatus(r['Status']) || '—';
+    const sc       = getStatusClass(status);
+    const phone    = normalizePhone(r['Ph no']);
+    const amt      = r['deposit_amount']
+                     ? `$${parseFloat(r['deposit_amount']).toLocaleString()}` : '—';
+    const platform = r['search book'] || r['search casino'] || '—';
+    const date     = fmtDate(getRowDate(r));
+    return `<tr>
+      <td style="color:var(--text)">${first} ${last}</td>
+      <td><span class="status-badge ${sc}">${status}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent)">${phone}</td>
+      <td style="color:var(--muted);font-size:11px">${r['Email']||''}</td>
+      <td style="font-size:11px">${platform}</td>
+      <td style="text-align:right;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px">${amt}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">${date}</td>
+    </tr>`;
+  }).join('');
+  return { head, body };
+}
+
+function calculateRepScorecards(rows, repName) {
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+  
+  if (!dateFrom || !dateTo) {
+    return {
+      currentActive: '—', previousActive: '—',
+      currentUnique: '—', previousUnique: '—',
+      activeChange: '', uniqueChange: '',
+      activeChangeClass: 'neutral', uniqueChangeClass: 'neutral'
+    };
+  }
+  
+  const fromDate = new Date(dateFrom);
+  const toDate = new Date(dateTo);
+  const daysDiff = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
+  
+  const prevToDate = new Date(fromDate);
+  prevToDate.setDate(prevToDate.getDate() - 1);
+  const prevFromDate = new Date(prevToDate);
+  prevFromDate.setDate(prevFromDate.getDate() - daysDiff + 1);
+  
+  const currentRows = rows.filter(r => {
+    const date = r['welcome_approved_date'];
+    if (!date) return false;
+    const d = new Date(date);
+    return d >= fromDate && d <= toDate && 
+           r['Approved Welcome'] && r['Approved Welcome'].trim() === repName;
+  });
+  
+  const previousRows = _repData.filter(r => {
+    const date = r['welcome_approved_date'];
+    if (!date) return false;
+    const d = new Date(date);
+    return d >= prevFromDate && d <= prevToDate &&
+           (r['Approved Welcome'] && r['Approved Welcome'].trim() === repName);
+  });
+  
+  const currentActive = calculateActiveTime(currentRows, daysDiff);
+  const previousActive = calculateActiveTime(previousRows, daysDiff);
+  
+  const currentCompleted = rows.filter(r => {
+    const status = normalizeStatus(r['Status']);
+    const date = getRowDate(r);
+    if (!date) return false;
+    const d = new Date(date);
+    return status === 'Completed / Verified' && d >= fromDate && d <= toDate;
+  });
+  
+  const previousCompleted = _repData.filter(r => {
+    const status = normalizeStatus(r['Status']);
+    const date = getRowDate(r);
+    if (!date) return false;
+    const d = new Date(date);
+    const repMatch = [r['Approved Deposit'], r['Approved Welcome']].some(f => f && f.trim() === repName);
+    return status === 'Completed / Verified' && d >= prevFromDate && d <= prevToDate && repMatch;
+  });
+  
+  const currentUnique = new Set(currentCompleted.map(r => normalizePhone(r['Ph no']))).size;
+  const previousUnique = new Set(previousCompleted.map(r => normalizePhone(r['Ph no']))).size;
+  
+  const activeChangePct = previousActive.totalMinutes > 0 
+    ? Math.round(((currentActive.totalMinutes - previousActive.totalMinutes) / previousActive.totalMinutes) * 100)
+    : 0;
+  const uniqueChangePct = previousUnique > 0
+    ? Math.round(((currentUnique - previousUnique) / previousUnique) * 100)
+    : 0;
+  
+  return {
+    currentActive: currentActive.display,
+    previousActive: previousActive.display,
+    currentUnique: currentUnique,
+    previousUnique: previousUnique,
+    activeChange: activeChangePct !== 0 ? `${activeChangePct > 0 ? '+' : ''}${activeChangePct}%` : '—',
+    uniqueChange: uniqueChangePct !== 0 ? `${uniqueChangePct > 0 ? '+' : ''}${uniqueChangePct}%` : '—',
+    activeChangeClass: activeChangePct > 0 ? 'positive' : activeChangePct < 0 ? 'negative' : 'neutral',
+    uniqueChangeClass: uniqueChangePct > 0 ? 'positive' : uniqueChangePct < 0 ? 'negative' : 'neutral'
+  };
+}
+
+function calculateActiveTime(rows, totalDays) {
+  if (rows.length === 0) return { display: '0h 0m', totalMinutes: 0 };
+  
+  const dayMap = {};
+  rows.forEach(r => {
+    const date = r['welcome_approved_date'];
+    if (!date) return;
+    const d = new Date(date);
+    const dayKey = d.toISOString().split('T')[0];
+    if (!dayMap[dayKey]) dayMap[dayKey] = [];
+    dayMap[dayKey].push(d);
+  });
+  
+  let totalMinutes = 0;
+  Object.values(dayMap).forEach(timestamps => {
+    if (timestamps.length === 0) return;
+    timestamps.sort((a, b) => a - b);
+    const first = timestamps[0];
+    const last = timestamps[timestamps.length - 1];
+    const diffMs = last - first;
+    totalMinutes += Math.floor(diffMs / (1000 * 60));
+  });
+  
+  const avgMinutes = totalDays > 0 ? Math.floor(totalMinutes / totalDays) : totalMinutes;
+  const hours = Math.floor(avgMinutes / 60);
+  const minutes = avgMinutes % 60;
+  
+  return {
+    display: `${hours}h ${minutes}m`,
+    totalMinutes: avgMinutes
+  };
+}
+
+// ── Conversion Funnel ─────────────────────────────────────────────────────────
+const FUNNEL_ORDER = [
+  'Signup Clicked','Reviewing Welcome','Welcome Approved',
+  'Reviewing Deposit','Completed / Verified'
+];
+const FUNNEL_COLORS = {
+  'Signup Clicked':'#60a5fa','Reviewing Welcome':'#fbbf24',
+  'Welcome Approved':'#34d399','Reviewing Deposit':'#f59e0b',
+  'Completed / Verified':'#00e5a0'
+};
+
+function renderFunnel(data) {
+  const total  = data.length || 1;
+  const counts = {};
+  data.forEach(r => {
+    const s = normalizeStatus(r['Status']) || 'Unknown';
+    counts[s] = (counts[s]||0) + 1;
+  });
+
+  const stages = FUNNEL_ORDER
+    .map(s => ({ label:s, count:counts[s]||0 }))
+    .filter(s => s.count > 0);
+  Object.entries(counts).forEach(([s,c]) => {
+    if (!FUNNEL_ORDER.includes(s)) stages.push({ label:s, count:c });
+  });
+
+  const maxCount = Math.max(...stages.map(s=>s.count), 1);
+
+  document.getElementById('funnelBody').innerHTML = stages.map((stage,i) => {
+    const pct     = Math.round(stage.count/total*100);
+    const barPct  = Math.round(stage.count/maxCount*100);
+    const color   = FUNNEL_COLORS[stage.label] || 'var(--muted)';
+    const prev    = i>0 ? stages[i-1].count : null;
+    const dropPct = prev ? Math.round((1-stage.count/prev)*100) : null;
+    const drop    = dropPct!==null
+      ? `<span class="funnel-drop">${dropPct>0?`↓${dropPct}%`:'='}</span>`
+      : `<span class="funnel-drop"></span>`;
+    return `<div class="funnel-step">
+      <span class="funnel-label">${stage.label}</span>
+      <div class="funnel-bar-track">
+        <div class="funnel-bar-fill"
+          style="width:${barPct}%;background:${color};min-width:${stage.count>0?'4px':'0'}">
+          ${barPct>15?stage.count:''}
+        </div>
+      </div>
+      <span class="funnel-count">${stage.count}</span>
+      <span class="funnel-pct">${pct}%</span>
+      ${drop}
+    </div>`;
+  }).join('') || '<div class="empty">No data</div>';
+}
+
+// ── Platform Performance ──────────────────────────────────────────────────────
+let _platformFilter  = 'all';
+let _platformSortCol = 'deposit';
+let _platformSortDir = -1;
+let _platformData    = [];
+let _platformPage    = 0;
+
+function setPlatformFilter(f) {
+  _platformFilter = f;
+  _platformPage   = 0;
+  document.querySelectorAll('.tog-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.filter===f));
+  buildPlatformTable(_platformData);
+}
+
+function renderBooks(data) {
+  _platformData = data;
+  _platformPage = 0;
+  buildPlatformTable(data);
+}
+
+function buildPlatformTable(data) {
+  const map = {};
+  data.forEach(r => {
+    [[r['search book'],'Sportsbook'],[r['search casino'],'Casinos']].forEach(([name,type]) => {
+      if (!name) return;
+      const k = name.trim();
+      if (!map[k]) map[k] = { name:k, type, signups:0, completed:0, deposit:0, rows:[], partnerships: new Set() };
+      if (r['Partnership Name']) map[k].partnerships.add(r['Partnership Name']);
+      map[k].signups++;
+      if (normalizeStatus(r['Status']) === 'Completed / Verified') {
+        map[k].completed++;
+        const n = parseFloat(r['deposit_amount']);
+        if (!isNaN(n)) map[k].deposit += n;
+      }
+      map[k].rows.push(r);
+    });
+  });
+
+  let entries = Object.values(map);
+  if (_platformFilter==='sport')  entries = entries.filter(e=>e.type==='Sportsbook');
+  if (_platformFilter==='casino') entries = entries.filter(e=>e.type==='Casinos');
+
+  entries.sort((a,b) => {
+    const va = a[_platformSortCol] ?? a.name;
+    const vb = b[_platformSortCol] ?? b.name;
+    return typeof va==='string'
+      ? _platformSortDir*va.localeCompare(vb)
+      : _platformSortDir*(va-vb);
+  });
+
+  document.querySelectorAll('#platformTable th.sortable').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.col===_platformSortCol)
+      th.classList.add(_platformSortDir===1?'sort-asc':'sort-desc');
+  });
+
+  const total      = entries.length;
+  const totalPages = Math.ceil(total/PAGE_SIZE)||1;
+  _platformPage = Math.max(0, Math.min(_platformPage, totalPages-1));
+  const slice = entries.slice(_platformPage*PAGE_SIZE, (_platformPage+1)*PAGE_SIZE);
+
+  if (!slice.length) {
+    document.getElementById('platformBody').innerHTML =
+      '<tr><td colspan="6" class="empty">No data</td></tr>';
+  } else {
+    document.getElementById('platformBody').innerHTML = slice.map(e => {
+      const fmtDep = e.deposit>0
+        ? `$${e.deposit.toLocaleString(undefined,{maximumFractionDigits:0})}` : '—';
+      const conv = e.signups ? Math.round(e.completed/e.signups*100) : 0;
+      const typeColor = e.type==='Sportsbook' ? '#60a5fa' : '#a78bfa';
+      const safeName = e.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<tr class="platform-row" onclick="openPlatformDrill('${safeName}')">
+        <td style="font-weight:600;color:var(--text)">${e.name}</td>
+        <td><span style="font-size:10px;color:${typeColor};font-family:'Space Mono',monospace">${e.type}</span></td>
+        <td class="td-num">${e.signups}</td>
+        <td class="td-num" style="color:var(--accent)">${e.completed}</td>
+        <td class="td-num" style="color:var(--gold)">${fmtDep}</td>
+        <td class="td-num">${conv}%</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Sort listeners
+  document.querySelectorAll('#platformTable th.sortable').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.col;
+      _platformSortCol===col ? (_platformSortDir*=-1) : (_platformSortCol=col,_platformSortDir=-1);
+      _platformPage = 0;
+      buildPlatformTable(_platformData);
+    };
+  });
+
+  const pagEl = document.getElementById('platformTablePagination');
+  if (pagEl) {
+    if (totalPages>1) {
+      pagEl.style.display='';
+      renderPagBar('platformTablePagination', _platformPage, totalPages, total,
+        'platTablePrev','platTableNext','platTableJump');
+    } else {
+      pagEl.style.display='none';
+    }
+  }
+}
+
+function platTablePrev() { _platformPage--; buildPlatformTable(_platformData); }
+function platTableNext() { _platformPage++; buildPlatformTable(_platformData); }
+function platTableJump(v) { _platformPage=Math.max(0,parseInt(v,10)-1)||0; buildPlatformTable(_platformData); }
+
+function openPlatformDrill(name) {
+  // Find platform entry
+  const map = {};
+  _platformData.forEach(r => {
+    [[r['search book'],'Sportsbook'],[r['search casino'],'Casinos']].forEach(([n,type]) => {
+      if (!n||n.trim()!==name) return;
+      if (!map[name]) map[name]={name,type,signups:0,completed:0,deposit:0,rows:[]};
+      map[name].signups++;
+      if (normalizeStatus(r['Status'])==='Completed / Verified') {
+        map[name].completed++;
+        const v=parseFloat(r['deposit_amount']); if(!isNaN(v)) map[name].deposit+=v;
+      }
+      map[name].rows.push(r);
+    });
+  });
+  const e = map[name];
+  if (!e) return;
+  const fmtDep = e.deposit>0 ? `$${e.deposit.toLocaleString(undefined,{maximumFractionDigits:0})}` : '$0';
+  const conv   = e.signups ? Math.round(e.completed/e.signups*100) : 0;
+  const subtitle = `${e.signups} signups · ${e.completed} completed · ${fmtDep} deposits · ${conv}% conv`;
+  openModal(name, subtitle, e.rows, renderPlatformDrillRows);
+}
+
+function renderPlatformDrillRows(slice) {
+  const head = `<tr>
+    <th>Name</th><th>Status</th><th>Phone</th><th>Email</th>
+    <th>Partnership</th><th>Rep</th><th style="text-align:right">Deposit $</th><th>Date</th>
+  </tr>`;
+  const body = slice.map(r => {
+    const { first, last } = splitName(r['Name']);
+    const status = normalizeStatus(r['Status'])||'—';
+    const sc     = getStatusClass(status);
+    const phone  = normalizePhone(r['Ph no']);
+    const rep         = getRepFromRow(r) || '—';
+    const partnership = r['Partnership Name'] || '—';
+    const amt         = r['deposit_amount']
+                        ? `$${parseFloat(r['deposit_amount']).toLocaleString()}` : '—';
+    const date        = fmtDate(getRowDate(r));
+    return `<tr>
+      <td style="color:var(--text)">${first} ${last}</td>
+      <td><span class="status-badge ${sc}">${status}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent)">${phone}</td>
+      <td style="color:var(--muted);font-size:11px">${r['Email']||''}</td>
+      <td style="font-size:11px;color:var(--accent2)">${partnership}</td>
+      <td style="font-size:11px;font-weight:600">${rep}</td>
+      <td style="text-align:right;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px">${amt}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">${date}</td>
+    </tr>`;
+  }).join('');
+  return { head, body };
+}
+
+function resetFilters() {
+  document.getElementById('dateType').value = '';
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value   = '';
+  Object.keys(MS).forEach(k => {
+    MS[k].selected.clear();
+    updateMsLabel(k);
+  });
+  render();
+}
+
+
+// ---- EVENT LISTENERS ----
+['dateType','dateFrom','dateTo'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('change', render);
+  }
+});
+
+document.getElementById('statusDetailFilter').addEventListener('change', function() {
+  if (this.value) {
+    selectStatus(this.value);
+  } else {
+    backToSummary();
+  }
+});
+
+// Init
+populateDropdowns();
+render();
+</script>
+</body>
+</html>
